@@ -22,9 +22,7 @@ end.
 Lemma next_d : forall l0 l1 r0 r1 n d : nat,
   (n,d) = next (l0,l1) (r0,r1) -> d = l1 + r1.
 Proof.
-  intros l0 l1 r0 r1.
-  intros n d.
-  intros H.
+  intros l0 l1 r0 r1 n d H.
   unfold next in H.
   apply (f_equal (@snd _ _)) in H.
   simpl in H.
@@ -34,9 +32,7 @@ Qed.
 Theorem next_d_gt_0 : forall l0 l1 r0 r1 n d : nat,
   ((n,d) = next (l0,l1) (r0,r1)) /\ (l1 > 0 \/ r1 > 0) -> d > 0.
 Proof.
-  intros l0 l1 r0 r1.
-  intros n d.
-  intros H.
+  intros l0 l1 r0 r1 n d H.
   unfold next in H.
   decompose [and] H.
   elim H1.
