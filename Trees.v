@@ -54,18 +54,12 @@ Definition cotree_bf {A: Type} (t: cotree A) : colist A.
   apply not_eq_sym; apply nil_cons.
 Defined.
 
-(** **** example cotree of natural numbers *)
-
-Definition enum_nat (k:nat) : (nat*nat*nat) := (2*k+1, k, 2*k+2).
-
-(** should give the first 10 natural numbers *)
-
-Eval compute in colist_take 10 (cotree_bf (cotree_unfold enum_nat 0)).
-
-(** **** example cotree of rational numbers *)
+(** **** CoTrees of Rational Numbers *)
 
 Require Import NArith.
 Require Import QArith.
+
+(** **** The Calkin-Wilf Tree *)
 
 Definition calkin_wilf_step (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
   match q with
@@ -77,6 +71,16 @@ Definition calkin_wilf_tree : cotree Q := cotree_unfold calkin_wilf_step (1,1)%p
 Definition calkin_wilf_list : colist Q := cotree_bf calkin_wilf_tree.
 
 Eval compute in colist_take 10 calkin_wilf_list.
+
+(** **** The Stern-Brocot Tree *)
+
+Definition N_pos (n:N) : n<>N0 -> positive.
+  refine (match n as n' return n'<>N0 -> positive with
+            | N0     => fun h => _
+            | Npos p => fun h => p
+          end).
+  exfalso; apply h; reflexivity.
+Defined.
 
 Definition stern_brocot_step (q:(N*N)*(N*N)) : ((N*N)*(N*N))*Q*((N*N)*(N*N)).
 Admitted.
