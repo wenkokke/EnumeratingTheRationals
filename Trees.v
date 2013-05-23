@@ -56,6 +56,31 @@ Defined.
 
 (** **** example cotree of natural numbers *)
 
-Definition step (k:nat) : (nat*nat*nat) := (2*k, k, 2*k+1).
+Definition enum_nat (k:nat) : (nat*nat*nat) := (2*k+1, k, 2*k+2).
 
-Eval compute in colist_take 10 (cotree_bf (cotree_unfold step 1)).
+(** should give the first 10 natural numbers *)
+
+Eval compute in colist_take 10 (cotree_bf (cotree_unfold enum_nat 0)).
+
+(** **** example cotree of rational numbers *)
+
+Require Import NArith.
+Require Import QArith.
+
+Definition calkin_wilf_step (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
+  match q with
+    | (m,n) => ((m,(m + n)%positive),Qmake (Zpos m) n,((m + n)%positive,n))
+  end.
+
+Definition calkin_wilf_tree : cotree Q := cotree_unfold calkin_wilf_step (1,1)%positive.
+
+Definition calkin_wilf_list : colist Q := cotree_bf calkin_wilf_tree.
+
+Eval compute in colist_take 10 calkin_wilf_list.
+
+Definition stern_brocot_step (q:(N*N)*(N*N)) : ((N*N)*(N*N))*Q*((N*N)*(N*N)).
+Admitted.
+
+Definition stern_brocot_tree : cotree Q := cotree_unfold stern_brocot_step ((0,1),(1,0))%N.
+
+Definition stern_brocot_list : colist Q := cotree_bf stern_brocot_tree.
