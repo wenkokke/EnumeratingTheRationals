@@ -1,17 +1,17 @@
+(** * Enumerating The Rationals *)
+
 Require Import List.
+Require Import Streams.
+Require Import PArith.
+Require Import NArith.
+Require Import QArith.
 
-Inductive tree (A: Type) :=
-  | leaf : tree A
-  | node : tree A -> A -> tree A -> tree A.
+(** ** Datatypes: Trees and CoTrees *)
 
-Fixpoint tree_fold {A B: Type} (f: (B*A*B) -> B) (e: B) (t: tree A) : B :=
-  match t with
-  | leaf       => e
-  | node l x r => f (tree_fold f e l, x, tree_fold f e r)
-  end.
+(** *** CoLists *)
 
-CoInductive colist (A: Type) :=
-  | cocons : A -> colist A -> colist A.
+Definition colist := Stream.
+Definition cocons := Cons.
 
 CoFixpoint colist_unfold {A B: Type} (f: B -> (A*B)) (e: B) : colist A :=
   match f e with
@@ -26,6 +26,26 @@ Fixpoint colist_take {A: Type} (n: nat) (xs: colist A) : list A :=
         | cocons x xs => cons x (colist_take n xs)
       end
   end.
+
+(** *** Trees *)
+
+Inductive tree (A: Type) :=
+  | leaf : tree A
+  | node : tree A -> A -> tree A -> tree A.
+
+Fixpoint tree_fold {A B: Type} (f: (B*A*B) -> B) (e: B) (t: tree A) : B :=
+  match t with
+    | leaf       => e
+    | node l x r => f (tree_fold f e l, x, tree_fold f e r)
+  end.
+
+Fixpoint tree_in {A: Type} (e: A) (t: tree A) : Prop :=
+  match t with
+    | leaf       => False
+    | node l x r => e = x \/ tree_in e l \/ tree_in e r
+  end.
+
+(** *** CoTrees *)
 
 CoInductive cotree (A: Type) :=
   | conode : cotree A -> A -> cotree A -> cotree A.
@@ -54,17 +74,13 @@ Definition cotree_bf {A: Type} (t: cotree A) : colist A.
   apply not_eq_sym; apply nil_cons.
 Defined.
 
-(** **** CoTrees of Rational Numbers *)
+(** ** CoTrees of Rational Numbers *)
 
-Require Import PArith.
-Require Import NArith.
-Require Import QArith.
-
-(** **** The Calkin-Wilf Tree *)
+(** *** The Calkin-Wilf Tree *)
 
 Definition calkin_wilf_step (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
   match q with
-    | (m,n) => ((m,(m + n)%positive),Qmake (Zpos m) n,((m + n)%positive,n))
+    | (m,n) => ((m,(m + n)%positive),Zpos m # n,((m + n)%positive,n))
   end.
 
 Definition calkin_wilf_tree : cotree Q := cotree_unfold calkin_wilf_step (1,1)%positive.
@@ -73,7 +89,10 @@ Definition calkin_wilf_enum : colist Q := cotree_bf calkin_wilf_tree.
 
 Eval compute in colist_take 10 calkin_wilf_enum.
 
-(** **** The Stern-Brocot Tree *)
+
+(** *** The Stern-Brocot Tree *)
+
+(** **** Additional Proofs on Natural Numbers *)
 
 Definition N_pos (n:N) : n<>N0 -> positive.
   refine (match n as n' return n'<>N0 -> positive with
@@ -90,7 +109,7 @@ Definition N_Z (n:N) : Z :=
   end.
 
 Lemma Npos_over_Nplus_l : forall n m : N,
-  n <> N0 -> (n + m)%N <> N0.
+  (n <> 0 -> n + m <> 0)%N.
 Proof.
   intros n m H.
   destruct n as [|n].
@@ -101,7 +120,7 @@ Proof.
 Qed.
 
 Lemma Npos_over_Nplus_r : forall n m : N,
-  m <> N0 -> (n + m)%N <> N0.
+  (m <> 0 -> n + m <> 0)%N.
 Proof.
   intros n m.
   rewrite Nplus_comm.
@@ -109,7 +128,7 @@ Proof.
 Qed.
 
 Lemma Npos_over_Nplus : forall n m : N,
-  (n <> N0 \/ m <> N0) -> (n + m)%N <> N0.
+  (n <> 0 \/ m <> 0 -> n + m <> 0)%N.
 Proof.
   intros n m H.
   elim H.
@@ -117,17 +136,19 @@ Proof.
   - apply Npos_over_Nplus_r.
 Qed.
 
-Inductive stern_brocot_pair : Type :=
-| Qpair (lm ln rm rn : N) (HL: lm<>N0 \/ rm<>N0) (HR: ln<>N0 \/ rn<>N0) : stern_brocot_pair.
+(** **** Construction of the Tree *)
 
-Definition stern_brocot_step (q:stern_brocot_pair) : stern_brocot_pair*Q*stern_brocot_pair.
+Inductive Qpair : Type :=
+| qpair (a b c d : N) (HL: a<>0%N \/ c<>0%N) (HR: b<>0%N \/ d<>0%N) : Qpair.
+
+Definition stern_brocot_step (q:Qpair) : Qpair*Q*Qpair.
   refine (match q with
-            | Qpair a b c d HL HR =>
+            | qpair a b c d HL HR =>
               let ac := (a + c)%N in
               let bd := (b + d)%N in
-              let l  := Qpair a  b  ac bd _ _ in
-              let r  := Qpair ac bd  c  d _ _ in
-              let q  := Qmake (N_Z ac) (N_pos bd _) in
+              let l  := qpair a  b  ac bd _ _ in
+              let r  := qpair ac bd  c  d _ _ in
+              let q  := N_Z ac # N_pos bd _ in
               (l,q,r)
           end).
   - right; unfold ac; apply Npos_over_Nplus in HL; assumption.
@@ -138,20 +159,19 @@ Definition stern_brocot_step (q:stern_brocot_pair) : stern_brocot_pair*Q*stern_b
 Qed.
 
 Definition stern_brocot_tree : cotree Q.
-  refine (cotree_unfold stern_brocot_step (Qpair 0 1 1 0 _ _)%N).
+  refine (cotree_unfold stern_brocot_step (qpair 0 1 1 0 _ _)%N).
   - right; discriminate.
   - left ; discriminate.
 Qed.
 
 Definition stern_brocot_enum : colist Q := cotree_bf stern_brocot_tree.
 
-(** there's something funny going on here *)
-
-Definition test_stern_brocot_step1 : stern_brocot_pair*Q*stern_brocot_pair.
+Definition stern_brocot_first_step : Qpair*Q*Qpair.
 Proof.
-  refine (stern_brocot_step (Qpair 0 1 1 0 _ _)%N).
+  refine (stern_brocot_step (qpair 0 1 1 0 _ _)%N).
   - right; discriminate.
   - left ; discriminate.
 Defined.
 
-Eval compute in test_stern_brocot_step1.
+Eval compute in stern_brocot_first_step.
+
