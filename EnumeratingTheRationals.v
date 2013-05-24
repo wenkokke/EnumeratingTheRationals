@@ -268,8 +268,22 @@ Module CoTrees.
   
   Require Import Coq.Logic.Decidable.
 
-  Lemma NotForallNotP_ExistsP : forall {A} P (t: cotree A),
-    ~(Forall (fun t => ~P t) t) -> Exists P t.
+  Lemma ExistsNotNotP_NotForallNotP : forall {A} P (t: cotree A),
+    Exists (fun t => ~ ~ P t) t -> ~ Forall (fun t => ~P t) t.
+  Proof. 
+    intros A P t H F.
+    destruct H.
+    - apply Forall_here  in F; elim H; assumption.
+    - apply Forall_left  in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
+    - apply Forall_right in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
+  Qed.
+
+  Lemma ExistsP_NotForallNotP : forall {A} P (t: cotree A),
+   (forall t0, decidable (P t0))
+    -> Exists P t -> ~ Forall (fun t => ~ P t) t.
+  Proof.
+    intros A P t P_dec H.
+    apply ExistsNotNotP_NotForallNotP.
   Admitted.
 
   Section Map.
