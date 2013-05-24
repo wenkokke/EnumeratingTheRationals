@@ -232,9 +232,9 @@ Module CalkinWilf.
       | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
     end.
   
-  Definition tree : cotree Q := CoTrees.unfold next (1,1).
+  Definition tree : cotree Q := cotree_unfold next (1,1).
   
-  Definition enum : colist Q := CoTrees.bf tree.
+  Definition enum : colist Q := cotree_bf tree.
   
 End CalkinWilf.
 
@@ -318,12 +318,12 @@ Module SternBrocot.
   Defined.
 
   Definition tree : cotree Q.
-    refine (CoTrees.unfold next (qpair 0 1 1 0 _ _)).
+    refine (cotree_unfold next (qpair 0 1 1 0 _ _)).
     - right; discriminate.
     - left ; discriminate.
   Defined.
   
-  Definition enum : colist Q := CoTrees.bf tree.
+  Definition enum : colist Q := cotree_bf tree.
   
 End SternBrocot.
 
