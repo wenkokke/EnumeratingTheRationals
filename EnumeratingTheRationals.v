@@ -215,10 +215,38 @@ Module CoTrees.
   | Here  : P t -> Exists P t
   | Left  : Exists P (left t) -> Exists P t
   | Right : Exists P (right t) -> Exists P t.
-  
+
+  Section Exists_coind.
+    Variable A: Type.
+    Variable R: cotree A -> Prop.
+    Variable P: cotree A -> Prop.
+    
+    Hypothesis Cases : forall t, R t -> P t \/ R (left t) \/ R (right t).
+
+    Theorem Exists_coind : forall t, R t -> Exists P t.
+    Admitted.
+  End Exists_coind.
+
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
 
+  Section Forall_coind.
+    Variable A: Type.
+    Variable R: cotree A -> Prop.
+    Variable P: cotree A -> Prop.
+
+    Hypothesis Case_here  : forall t, R t -> P t.
+    Hypothesis Case_left  : forall t, R t -> R (left t).
+    Hypothesis Case_right : forall t, R t -> R (right t).
+    
+    Theorem Forall_coind : forall t, R t -> Forall P t.
+      cofix.
+      constructor.
+      - apply Case_here in H; assumption.
+      - apply Case_left in H; apply Forall_coind in H; assumption.
+      - apply Case_right in H; apply Forall_coind in H; assumption.
+    Qed.
+  End Forall_coind.
 End CoTrees.
 
 (** Import [CoTrees] into the global scope. *)
@@ -258,7 +286,25 @@ Module CalkinWilf.
   Definition tree : cotree Q := cotree_unfold next (1,1).
   
   Definition enum : colist Q := cotree_bf tree.
+
+  Local Open Scope Q_scope.
+
+  Definition colist_here_eq (q:Q) (l: colist Q) :=
+    match l with 
+      | cocons p _ => p == q
+    end.
   
+  Theorem enum_contains_1 : colist_exists (colist_here_eq (1#1)) enum.
+  Proof. constructor; reflexivity. Qed.
+
+  Definition cotree_here_eq (q:Q) (l: cotree Q) :=
+    match l with
+      | conode _ p _ => p == q
+    end.
+
+  Theorem tree_contains_1 : cotree_exists (cotree_here_eq (1#1)) tree.
+  Proof. constructor; reflexivity. Qed.
+
 End CalkinWilf.
 
 Notation calkin_wilf_next := CalkinWilf.next.
