@@ -6,9 +6,7 @@ Require Import PArith.
 Require Import NArith.
 Require Import QArith.
 
-(** ** Datatypes: Trees and CoTrees *)
-
-(** *** CoLists *)
+(** ** CoLists *)
 
 Module CoLists.
 
@@ -39,13 +37,16 @@ Module CoLists.
 
 End CoLists.
 
-(** Import [CoLists.colist] into the global scope. *)
+Notation colist        := CoLists.colist.
+Notation cocons        := CoLists.cocons.
+Notation colist_unfold := CoLists.unfold.
+Notation colist_take   := CoLists.take.
 
-Definition colist := CoLists.colist.
-Definition cocons := CoLists.cocons.
-  
-(** *** CoTrees *)
+(** ** CoTrees *)
+
 Module CoTrees.
+
+  Delimit Scope cotree_scope with cotree.
 
   CoInductive cotree (A: Type) :=
   | conode : cotree A -> A -> cotree A -> cotree A.
@@ -107,179 +108,203 @@ Module CoTrees.
       Note that the constructor [conode_eq] can only be applied
       when both roots are already proven equal. *)
 
-  CoInductive cotree_eq {A: Type} : cotree A -> cotree A -> Prop :=
-  | conode_eq : forall x l1 r1 l2 r2,
-    cotree_eq l1 l2
-    -> cotree_eq r1 r2
-    -> cotree_eq (conode _ l1 x r1) (conode _ l2 x r2).
+  CoInductive Eq {A: Type} : cotree A -> cotree A -> Prop :=
+    cotree_eq : forall x l1 r1 l2 r2,
+                  Eq l1 l2
+                  -> Eq r1 r2
+                  -> Eq (conode _ l1 x r1) (conode _ l2 x r2).
 
-  Theorem cotree_eq_root : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> root t1 = root t2.
+  Theorem Eq_root : forall {A: Type} (t1 t2: cotree A), Eq t1 t2 -> root t1 = root t2.
     intros A t1 t2 H; destruct H; reflexivity.
   Qed.
 
-  Theorem cotree_eq_left : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> cotree_eq (left t1) (left t2).
+  Theorem Eq_left : forall {A: Type} (t1 t2: cotree A), Eq t1 t2 -> Eq (left t1) (left t2).
     intros A t1 t2 H; destruct H; simpl; assumption.
   Qed.
 
-  Theorem cotree_eq_right : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> cotree_eq (right t1) (right t2).
+  Theorem Eq_right : forall {A: Type} (t1 t2: cotree A), Eq t1 t2 -> Eq (right t1) (right t2).
     intros A t1 t2 H; destruct H; simpl; assumption.
   Qed.
 
-  Section cotree_eq_coind.
+  Section Eq_coind.
     Variable A: Type.
     Variable R: cotree A -> cotree A -> Prop.
     
-    Hypothesis cotree_case_root    : forall t1 t2, R t1 t2 -> root t1 = root t2.
-    Hypothesis cotree_case_left  : forall t1 t2, R t1 t2 -> R (left t1) (left t2).
-    Hypothesis cotree_case_right : forall t1 t2, R t1 t2 -> R (right t1) (right t2).
+    Hypothesis Case_root  : forall t1 t2, R t1 t2 -> root t1 = root t2.
+    Hypothesis Case_left  : forall t1 t2, R t1 t2 -> R (left t1) (left t2).
+    Hypothesis Case_right : forall t1 t2, R t1 t2 -> R (right t1) (right t2).
     
-    Theorem cotree_eq_coind : forall t1 t2: cotree A, R t1 t2 -> cotree_eq t1 t2.
+    Theorem Eq_coind : forall t1 t2: cotree A, R t1 t2 -> Eq t1 t2.
       cofix.
       destruct t1 as [l1 x1 r1].
       destruct t2 as [l2 x2 r2].
       intro H.
       generalize H; intro Heq.
-      apply cotree_case_root in Heq; simpl in Heq; rewrite Heq.
+      apply Case_root in Heq; simpl in Heq; rewrite Heq.
       constructor.
-      - apply cotree_case_left in H; simpl in H.
-        apply cotree_eq_coind; assumption.
-      - apply cotree_case_right in H; simpl in H.
-        apply cotree_eq_coind; assumption.
+      - apply Case_left in H; simpl in H.
+        apply Eq_coind; assumption.
+      - apply Case_right in H; simpl in H.
+        apply Eq_coind; assumption.
     Qed.
-  End cotree_eq_coind.
+  End Eq_coind.
   
-  Theorem cotree_eq_refl : forall {A: Type} (t: cotree A), cotree_eq t t.
+  Theorem Eq_refl : forall {A: Type} (t: cotree A), Eq t t.
     intros A t.
-    apply (cotree_eq_coind A (fun t1 t2 => t1 = t2)).
+    apply (Eq_coind A (fun t1 t2 => t1 = t2)).
     - intros t1 t2 H; rewrite H; reflexivity.
     - intros t1 t2 H; rewrite H; reflexivity.
     - intros t1 t2 H; rewrite H; reflexivity.
     - reflexivity.
   Qed.
 
-  Theorem cotree_eq_sym : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> cotree_eq t2 t1.
+  Theorem Eq_sym : forall {A: Type} (t1 t2: cotree A), Eq t1 t2 -> Eq t2 t1.
     cofix.
     intros A t1 t2 H.
     destruct t1 as [l1 x1 r1].
     destruct t2 as [l2 x2 r2].
-    generalize H; intro Heq; apply cotree_eq_root in Heq; simpl in Heq.
+    generalize H; intro Heq; apply Eq_root in Heq; simpl in Heq.
     rewrite <- Heq.
     constructor.
-    - apply cotree_eq_left in H; simpl in H.
-      generalize H; apply cotree_eq_sym.
-    - apply cotree_eq_right in H; simpl in H.
-      generalize H; apply cotree_eq_sym.
+    - apply Eq_left in H; simpl in H.
+      generalize H; apply Eq_sym.
+    - apply Eq_right in H; simpl in H.
+      generalize H; apply Eq_sym.
   Qed.
 
-  Theorem cotree_eq_trans : forall {A: Type} (t1 t2 t3: cotree A), cotree_eq t1 t2 -> cotree_eq t2 t3 -> cotree_eq t1 t3.
+  Theorem Eq_trans : forall {A: Type} (t1 t2 t3: cotree A), Eq t1 t2 -> Eq t2 t3 -> Eq t1 t3.
     cofix.
     intros A t1 t2 t3 H12 H23.
     destruct t1 as [l1 x1 r1].
     destruct t2 as [l2 x2 r2].
     destruct t3 as [l3 x3 r3].
-    generalize H12; intro Heq12; apply cotree_eq_root in Heq12; simpl in Heq12.
-    generalize H23; intro Heq23; apply cotree_eq_root in Heq23; simpl in Heq23.
+    generalize H12; intro Heq12; apply Eq_root in Heq12; simpl in Heq12.
+    generalize H23; intro Heq23; apply Eq_root in Heq23; simpl in Heq23.
     rewrite <- Heq23, <- Heq12.
     constructor.
-    - apply cotree_eq_left in H12; simpl in H12.
-      apply cotree_eq_left in H23; simpl in H23.
+    - apply Eq_left in H12; simpl in H12.
+      apply Eq_left in H23; simpl in H23.
       generalize H12 H23.
-      apply cotree_eq_trans.
-    - apply cotree_eq_right in H12; simpl in H12.
-      apply cotree_eq_right in H23; simpl in H23.
+      apply Eq_trans.
+    - apply Eq_right in H12; simpl in H12.
+      apply Eq_right in H23; simpl in H23.
       generalize H12 H23.
-      apply cotree_eq_trans.
+      apply Eq_trans.
   Qed.
 
-  Inductive cotree_exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
-  | here    : P t -> cotree_exists P t
-  | further : cotree_exists P (left t) -> cotree_exists P (right t) -> cotree_exists P t.
+  Inductive Exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
+  | Here  : P t -> Exists P t
+  | Left  : Exists P (left t) -> Exists P t
+  | Right : Exists P (right t) -> Exists P t.
   
-  CoInductive cotree_forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
-  | always  : P t -> cotree_forall P (left t) -> cotree_forall P (right t) -> cotree_forall P t.
+  CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
+  | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
 
 End CoTrees.
 
-(** Import [CoTrees.cotree] into the global scope. *)
+(** Import [CoTrees] into the global scope. *)
 
-Definition cotree := CoTrees.cotree.
-Definition conode := CoTrees.conode.
+Notation cotree               := CoTrees.cotree.
+Notation conode               := CoTrees.conode.
+Notation cotree_unfold        := CoTrees.unfold.
+Notation cotree_bf            := CoTrees.bf.
+Notation cotree_root          := CoTrees.root.
+Notation cotree_left          := CoTrees.left.
+Notation cotree_right         := CoTrees.right.
+Notation cotree_eq            := CoTrees.Eq.
+Notation cotree_eq_refl       := CoTrees.Eq_refl.
+Notation cotree_eq_sym        := CoTrees.Eq_sym.
+Notation cotree_eq_trans      := CoTrees.Eq_trans.
+Notation cotree_exists        := CoTrees.Exists.
+Notation cotree_exists_here   := CoTrees.Here.
+Notation cotree_exists_left   := CoTrees.Left.
+Notation cotree_exists_right  := CoTrees.Right.
+Notation cotree_forall        := CoTrees.Forall.
+Notation cotree_forall_always := CoTrees.Always.
     
-(** ** CoTrees of Rational Numbers *)
-    
-(** *** The Calkin-Wilf Tree *)
+(** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
 
-  Definition step (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
+  Local Open Scope positive_scope.
+
+  Definition next (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
     match q with
-      | (m,n) => ((m,(m + n)%positive),Zpos m # n,((m + n)%positive,n))
+      | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
     end.
   
-  Definition tree : cotree Q := CoTrees.unfold step (1,1)%positive.
+  Definition tree : cotree Q := CoTrees.unfold next (1,1).
   
   Definition enum : colist Q := CoTrees.bf tree.
   
-  Eval compute in CoLists.take 10 enum.
-  
 End CalkinWilf.
 
-(** *** The Stern-Brocot Tree *)
+Notation calkin_wilf_next := CalkinWilf.next.
+Notation calkin_wilf_tree := CalkinWilf.tree.
+Notation calkin_wilf_enum := CalkinWilf.enum.
+
+(** ** The Stern-Brocot Tree *)
 Module SternBrocot.
 
-  (** **** Additional Proofs on Natural Numbers *)
-  
-  Definition N_pos (n:N) : n<>N0 -> positive.
-    refine (match n as n' return n'<>N0 -> positive with
-              | N0     => fun h => _
-              | Npos p => fun h => p
-            end).
-    exfalso; apply h; reflexivity.
-  Defined.
-  
-  Definition N_Z (n:N) : Z :=
-    match n with
-      | N0     => Z0 
-      | Npos n => Zpos n
-    end.
-  
-  Lemma Npos_over_Nplus_l : forall n m : N,
-    (n <> 0 -> n + m <> 0)%N.
-  Proof.
-    intros n m H.
-    destruct n as [|n].
-    - exfalso; apply H; reflexivity.
-    - destruct m as [|m].
-      * simpl; assumption.
-      * simpl; discriminate.
-  Qed.
-  
-  Lemma Npos_over_Nplus_r : forall n m : N,
-    (m <> 0 -> n + m <> 0)%N.
-  Proof.
-    intros n m.
-    rewrite Nplus_comm.
-    apply Npos_over_Nplus_l.
-  Qed.
-  
-  Lemma Npos_over_Nplus : forall n m : N,
-    (n <> 0 \/ m <> 0 -> n + m <> 0)%N.
-  Proof.
-    intros n m H.
-    elim H.
-    - apply Npos_over_Nplus_l.
-    - apply Npos_over_Nplus_r.
-  Qed.
+  (** *** Required Proofs on Natural Numbers *)
 
-  (** **** Construction of the Tree *)
+  Local Open Scope N_scope.
+  
+  Section N_Properties.
+
+    Definition N_pos (n:N) : n<>0 -> positive.
+      refine (match n as n' return n'<>0 -> positive with
+                | 0      => fun h => _
+                | Npos p => fun h => p
+              end).
+      exfalso; apply h; reflexivity.
+    Defined.
+  
+    Definition N_Z (n:N) : Z :=
+      match n with
+        | 0      => Z0 
+        | Npos n => Zpos n
+      end.
+    
+    Lemma Npos_over_Nplus_l : forall n m : N,
+      n <> 0 -> n + m <> 0.
+    Proof.
+      intros n m H.
+      destruct n as [|n].
+      - exfalso; apply H; reflexivity.
+      - destruct m as [|m].
+        * simpl; assumption.
+        * simpl; discriminate.
+    Qed.
+  
+    Lemma Npos_over_Nplus_r : forall n m : N,
+      m <> 0 -> n + m <> 0.
+    Proof.
+      intros n m.
+      rewrite Nplus_comm.
+      apply Npos_over_Nplus_l.
+    Qed.
+    
+    Lemma Npos_over_Nplus : forall n m : N,
+      n <> 0 \/ m <> 0 -> n + m <> 0.
+    Proof.
+      intros n m H.
+      elim H.
+      - apply Npos_over_Nplus_l.
+      - apply Npos_over_Nplus_r.
+    Qed.
+
+  End N_Properties.
+
+  (** *** Construction of the Tree *)
 
   Inductive Qpair : Type :=
-  | qpair (a b c d : N) (HL: a<>0%N \/ c<>0%N) (HR: b<>0%N \/ d<>0%N) : Qpair.
+  | qpair (a b c d : N) (HL: a<>0 \/ c<>0) (HR: b<>0 \/ d<>0) : Qpair.
 
-  Definition step (q:Qpair) : Qpair*Q*Qpair.
+  Definition next (q:Qpair) : Qpair*Q*Qpair.
     refine (match q with
               | qpair a b c d HL HR =>
-                let ac := (a + c)%N in
-                let bd := (b + d)%N in
+                let ac := a + c in
+                let bd := b + d in
                 let l  := qpair a  b  ac bd _ _ in
                 let r  := qpair ac bd  c  d _ _ in
                 let q  := N_Z ac # N_pos bd _ in
@@ -293,13 +318,15 @@ Module SternBrocot.
   Defined.
 
   Definition tree : cotree Q.
-    refine (CoTrees.unfold step (qpair 0 1 1 0 _ _)%N).
+    refine (CoTrees.unfold next (qpair 0 1 1 0 _ _)).
     - right; discriminate.
     - left ; discriminate.
   Defined.
   
   Definition enum : colist Q := CoTrees.bf tree.
   
-  Eval compute in CoLists.take 10 enum.
-
 End SternBrocot.
+
+Notation stern_brocot_next := SternBrocot.next.
+Notation stern_brocot_tree := SternBrocot.tree.
+Notation stern_brocot_enum := SternBrocot.enum.
