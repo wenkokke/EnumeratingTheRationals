@@ -12,14 +12,22 @@ Require Import QArith.
 
 Module CoLists.
 
+  (** A [colist] is defined by analogy to the [Stream] datatype,
+      so that we can use the high-level predicates defined in the
+      [Coq.Lists.Streams] module. *)
+
   Definition colist := Stream.
   Definition cocons := Cons.
+
+  (** Constructs [colist]s by iteratively unfolding values. *)
 
   CoFixpoint unfold {A B: Type} (f: B -> (A*B)) (e: B) : colist A :=
     match f e with
       | (x,xs) => cocons _ x (unfold f xs)
     end.
   
+  (** Takes a finite prefix of an infinite [colist]. *)
+
   Fixpoint take {A: Type} (n: nat) (xs: colist A) : list A :=
     match n with
       | O => nil
@@ -31,7 +39,8 @@ Module CoLists.
 
 End CoLists.
 
-(** Import [CoLists.colist] into the local scope. *)
+(** Import [CoLists.colist] into the global scope. *)
+
 Definition colist := CoLists.colist.
 Definition cocons := CoLists.cocons.
   
@@ -41,44 +50,62 @@ Module CoTrees.
   CoInductive cotree (A: Type) :=
   | conode : cotree A -> A -> cotree A -> cotree A.
 
+  (** Constructs [cotrees]s by iteratively unfolding values. *)
+
   CoFixpoint unfold {A B: Type} (f: B -> (B*A*B)) (e: B) : cotree A :=
     match f e with
       | (l,x,r) => conode _ (unfold f l) x (unfold f r)
     end.
+
+  (** Performs a breadth-first walk over a forest of [cotree]s, provided that
+      the forest is provably non-empty. *)
   
   CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : ts<>nil -> colist A.
     refine (match ts as xs return xs<>nil -> colist A with
-              | nil =>
-                fun h => _
-              | cons t ts =>
-                fun h  => 
-                  match t with
-                    | conode l x r => cocons _ x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
-                  end
+              | nil       => fun h => _
+              | cons t ts => fun h => 
+                match t with
+                  | conode l x r => cocons _ x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
+                end
             end).
     exfalso; apply h; reflexivity.
     apply not_eq_sym; apply app_cons_not_nil.
   Defined.
+
+  (** Performs a breadth-first walk over a [cotree], returning a [colist]. *)
   
   Definition bf {A: Type} (t: cotree A) : colist A.
     refine (bf_acc (t :: nil) _).
     apply not_eq_sym; apply nil_cons.
   Defined.
 
-  Definition hd {A: Type} (t: cotree A) : A :=
+  (** Returns the [root] of a [cotree], which is the topmost value. *)
+
+  Definition root {A: Type} (t: cotree A) : A :=
     match t with
       | conode _ x _ => x
     end.
+
+  (** Returns the left subtree of a [cotree]. *)
   
   Definition left {A: Type} (t: cotree A) : cotree A :=
     match t with
       | conode l _ _ => l
     end.
+
+  (** Returns the right subtree of a [cotree]. *)
   
   Definition right {A: Type} (t: cotree A) : cotree A :=
     match t with
       | conode _ _ r => r
     end.
+
+  (** Equality as defined on [cotree]s; to prove (co)equality,
+      one must show that the [root]s of the two trees are equal,
+      and that both of their subtrees are equal.
+   
+      Note that the constructor [conode_eq] can only be applied
+      when both roots are already proven equal. *)
 
   CoInductive cotree_eq {A: Type} : cotree A -> cotree A -> Prop :=
   | conode_eq : forall x l1 r1 l2 r2,
@@ -86,7 +113,7 @@ Module CoTrees.
     -> cotree_eq r1 r2
     -> cotree_eq (conode _ l1 x r1) (conode _ l2 x r2).
 
-  Theorem cotree_eq_hd : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> hd t1 = hd t2.
+  Theorem cotree_eq_root : forall {A: Type} (t1 t2: cotree A), cotree_eq t1 t2 -> root t1 = root t2.
     intros A t1 t2 H; destruct H; reflexivity.
   Qed.
 
@@ -102,7 +129,7 @@ Module CoTrees.
     Variable A: Type.
     Variable R: cotree A -> cotree A -> Prop.
     
-    Hypothesis cotree_case_hd    : forall t1 t2, R t1 t2 -> hd t1 = hd t2.
+    Hypothesis cotree_case_root    : forall t1 t2, R t1 t2 -> root t1 = root t2.
     Hypothesis cotree_case_left  : forall t1 t2, R t1 t2 -> R (left t1) (left t2).
     Hypothesis cotree_case_right : forall t1 t2, R t1 t2 -> R (right t1) (right t2).
     
@@ -112,7 +139,7 @@ Module CoTrees.
       destruct t2 as [l2 x2 r2].
       intro H.
       generalize H; intro Heq.
-      apply cotree_case_hd in Heq; simpl in Heq; rewrite Heq.
+      apply cotree_case_root in Heq; simpl in Heq; rewrite Heq.
       constructor.
       - apply cotree_case_left in H; simpl in H.
         apply cotree_eq_coind; assumption.
@@ -135,7 +162,7 @@ Module CoTrees.
     intros A t1 t2 H.
     destruct t1 as [l1 x1 r1].
     destruct t2 as [l2 x2 r2].
-    generalize H; intro Heq; apply cotree_eq_hd in Heq; simpl in Heq.
+    generalize H; intro Heq; apply cotree_eq_root in Heq; simpl in Heq.
     rewrite <- Heq.
     constructor.
     - apply cotree_eq_left in H; simpl in H.
@@ -150,8 +177,8 @@ Module CoTrees.
     destruct t1 as [l1 x1 r1].
     destruct t2 as [l2 x2 r2].
     destruct t3 as [l3 x3 r3].
-    generalize H12; intro Heq12; apply cotree_eq_hd in Heq12; simpl in Heq12.
-    generalize H23; intro Heq23; apply cotree_eq_hd in Heq23; simpl in Heq23.
+    generalize H12; intro Heq12; apply cotree_eq_root in Heq12; simpl in Heq12.
+    generalize H23; intro Heq23; apply cotree_eq_root in Heq23; simpl in Heq23.
     rewrite <- Heq23, <- Heq12.
     constructor.
     - apply cotree_eq_left in H12; simpl in H12.
@@ -173,7 +200,8 @@ Module CoTrees.
 
 End CoTrees.
 
-(** Import [CoTrees.cotree] into local scope. *)
+(** Import [CoTrees.cotree] into the global scope. *)
+
 Definition cotree := CoTrees.cotree.
 Definition conode := CoTrees.conode.
     
