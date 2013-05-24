@@ -248,6 +248,30 @@ Module CoTrees.
     intros A P t H; destruct H as [H0 HL HR]; assumption.
   Qed.
 
+  Lemma ForallP_ExistsP : forall {A} P (t: cotree A),
+    Forall P t -> Exists P t.
+  Proof.
+    intros A P t.
+    intro H; apply Forall_here in H.
+    constructor; assumption.
+  Qed.
+
+  Lemma ForallP_NotExistsNotP : forall {A} P (t: cotree A),
+    Forall P t -> ~(Exists (fun t => ~P t) t).
+  Proof.
+    intros A P t H F.
+    induction F as [t F0|t FL IHL|t FR IHR].
+    - apply Forall_here  in H; elim F0; assumption.
+    - apply Forall_left  in H; apply IHL in H; assumption.
+    - apply Forall_right in H; apply IHR in H; assumption.
+  Qed.
+  
+  Require Import Coq.Logic.Decidable.
+
+  Lemma NotForallNotP_ExistsP : forall {A} P (t: cotree A),
+    ~(Forall (fun t => ~P t) t) -> Exists P t.
+  Admitted.
+
   Section Map.
     
     (** Definition of [map] over [cotree]s. *)
