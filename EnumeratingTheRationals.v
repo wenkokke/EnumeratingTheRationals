@@ -16,7 +16,6 @@ Module CoLists.
 
   Notation colist   := Stream.
   Notation cocons   := Cons.
-  (** There imports are probably incorrect. *)
   Notation Eq       := EqSt.
   Notation Eq_refl  := EqSt_reflex.
   Notation Eq_sym   := sym_EqSt.
@@ -216,24 +215,13 @@ Module CoTrees.
   | Left  : Exists P (left t) -> Exists P t
   | Right : Exists P (right t) -> Exists P t.
 
-  Section Exists_coind.
-    Variable A: Type.
-    Variable R: cotree A -> Prop.
-    Variable P: cotree A -> Prop.
-    
-    Hypothesis Cases : forall t, R t -> P t \/ R (left t) \/ R (right t).
-
-    Theorem Exists_coind : forall t, R t -> Exists P t.
-    Admitted.
-  End Exists_coind.
-
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
 
   Section Forall_coind.
     Variable A: Type.
-    Variable R: cotree A -> Prop.
     Variable P: cotree A -> Prop.
+    Variable R: cotree A -> Prop.
 
     Hypothesis Case_here  : forall t, R t -> P t.
     Hypothesis Case_left  : forall t, R t -> R (left t).
@@ -242,11 +230,38 @@ Module CoTrees.
     Theorem Forall_coind : forall t, R t -> Forall P t.
       cofix.
       constructor.
-      - apply Case_here in H; assumption.
-      - apply Case_left in H; apply Forall_coind in H; assumption.
+      - apply Case_here  in H; assumption.
+      - apply Case_left  in H; apply Forall_coind in H; assumption.
       - apply Case_right in H; apply Forall_coind in H; assumption.
     Qed.
   End Forall_coind.
+
+  Lemma Forall_here : forall {A} P (t: cotree A), Forall P t -> P t.
+    intros A P t H; destruct H as [H0 HL HR]; assumption.
+  Qed.
+
+  Lemma Forall_left : forall {A} P (t: cotree A), Forall P t -> Forall P (left t).
+    intros A P t H; destruct H as [H0 HL HR]; assumption.
+  Qed.
+    
+  Lemma Forall_right : forall {A} P (t: cotree A), Forall P t -> Forall P (right t).
+    intros A P t H; destruct H as [H0 HL HR]; assumption.
+  Qed.
+
+  Section Map.
+    
+    (** Definition of [map] over [cotree]s. *)
+
+    CoFixpoint map {A B: Type} (f: A -> B) (t: cotree A) : cotree B :=
+      match t with
+        | conode l x r => conode _ (map f l) (f x) (map f r)
+      end.
+    
+    Theorem Forall_map : forall {A B: Type} (P: cotree B -> Prop) (f: A -> B) (t: cotree A),
+      Forall (fun t => P (map f t)) t -> Forall P (map f t).
+    Admitted.
+    
+  End Map.
 End CoTrees.
 
 (** Import [CoTrees] into the global scope. *)
@@ -255,6 +270,7 @@ Notation cotree               := CoTrees.cotree.
 Notation conode               := CoTrees.conode.
 Notation cotree_unfold        := CoTrees.unfold.
 Notation cotree_bf            := CoTrees.bf.
+Notation cotree_map           := CoTrees.map.
 Notation cotree_root          := CoTrees.root.
 Notation cotree_left          := CoTrees.left.
 Notation cotree_right         := CoTrees.right.
@@ -272,6 +288,9 @@ Notation cotree_exists_left   := CoTrees.Left.
 Notation cotree_exists_right  := CoTrees.Right.
 Notation cotree_forall        := CoTrees.Forall.
 Notation cotree_forall_always := CoTrees.Always.
+Notation cotree_forall_here   := CoTrees.Forall_here.
+Notation cotree_forall_left   := CoTrees.Forall_left.
+Notation cotree_forall_right  := CoTrees.Forall_right.
     
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
