@@ -14,14 +14,24 @@ Module CoLists.
       so that we can use the high-level predicates defined in the
       [Coq.Lists.Streams] module. *)
 
-  Definition colist := Stream.
-  Definition cocons := Cons.
+  Notation colist   := Stream.
+  Notation cocons   := Cons.
+  (** There imports are probably incorrect. *)
+  Notation Eq       := EqSt.
+  Notation Eq_refl  := EqSt_reflex.
+  Notation Eq_sym   := sym_EqSt.
+  Notation Eq_trans := trans_EqSt.
+  Notation Exists   := Exists.
+  Notation Here     := Here.
+  Notation Further  := Further.
+  Notation Forall   := ForAll.
+  Notation Always   := HereAndFurther.
 
   (** Constructs [colist]s by iteratively unfolding values. *)
 
   CoFixpoint unfold {A B: Type} (f: B -> (A*B)) (e: B) : colist A :=
     match f e with
-      | (x,xs) => cocons _ x (unfold f xs)
+      | (x,xs) => cocons  x (unfold f xs)
     end.
   
   (** Takes a finite prefix of an infinite [colist]. *)
@@ -37,10 +47,19 @@ Module CoLists.
 
 End CoLists.
 
-Notation colist        := CoLists.colist.
-Notation cocons        := CoLists.cocons.
-Notation colist_unfold := CoLists.unfold.
-Notation colist_take   := CoLists.take.
+Notation colist                := CoLists.colist.
+Notation cocons                := CoLists.cocons.
+Notation colist_eq             := CoLists.Eq.
+Notation colist_eq_refl        := CoLists.Eq_refl.
+Notation colist_eq_sym         := CoLists.Eq_sym.
+Notation colist_eq_trans       := CoLists.Eq_trans.
+Notation colist_exists         := CoLists.Exists.
+Notation colist_exists_here    := CoLists.Here.
+Notation colist_exists_further := CoLists.Further.
+Notation colist_forall         := CoLists.Forall.
+Notation colist_forall_always  := CoLists.Always.
+Notation colist_unfold         := CoLists.unfold.
+Notation colist_take           := CoLists.take.
 
 (** ** CoTrees *)
 
@@ -66,7 +85,7 @@ Module CoTrees.
               | nil       => fun h => _
               | cons t ts => fun h => 
                 match t with
-                  | conode l x r => cocons _ x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
+                  | conode l x r => cocons x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
                 end
             end).
     exfalso; apply h; reflexivity.
