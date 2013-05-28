@@ -44,6 +44,9 @@ Module CoLists.
         end
     end.
 
+  Definition In_head {A: Type} (P: A -> Prop) (l: colist A) : Prop := P (hd l).
+  Definition In {A: Type} (P: A -> Prop) (l: colist A) : Prop := Exists (In_head P) l.
+
 End CoLists.
 
 Notation colist                := CoLists.colist.
@@ -59,6 +62,8 @@ Notation colist_forall         := CoLists.Forall.
 Notation colist_forall_always  := CoLists.Always.
 Notation colist_unfold         := CoLists.unfold.
 Notation colist_take           := CoLists.take.
+Notation in_colist_head        := CoLists.In_head.
+Notation in_colist             := CoLists.In.
 
 (** ** CoTrees *)
 
@@ -119,6 +124,24 @@ Module CoTrees.
       | conode _ _ r => r
     end.
 
+  (** Define an inductive datatype for performing queries on
+      [cotree]s, as the [nat] type is for [colist]s. *)
+
+  Inductive path : Type :=
+  | Here  : path
+  | Left  : path -> path
+  | Right : path -> path.
+
+  Fixpoint lookup {A: Type} (p: path) (t: cotree A) : A :=
+    match t with
+      | conode l x r =>
+        match p with
+          | Here    => x
+          | Left  p => lookup p l
+          | Right p => lookup p r
+        end
+    end.
+        
   (** Equality as defined on [cotree]s; to prove (co)equality,
       one must show that the [root]s of the two trees are equal,
       and that both of their subtrees are equal.
@@ -211,9 +234,32 @@ Module CoTrees.
   Qed.
 
   Inductive Exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
-  | Here  : P t -> Exists P t
-  | Left  : Exists P (left t) -> Exists P t
-  | Right : Exists P (right t) -> Exists P t.
+  | Exists_here  : P t -> Exists P t
+  | Exists_left  : Exists P (left t) -> Exists P t
+  | Exists_right : Exists P (right t) -> Exists P t.
+
+  Definition In_root {A: Type} (P: A -> Prop) (t: cotree A) : Prop :=
+    match t with
+      | conode _ x _ => P x
+    end.
+
+  Definition In {A: Type} (P: A -> Prop) (t: cotree A) : Prop :=
+    Exists (In_root P) t.
+  
+  Theorem Exists_at : forall {A: Type} (P: A -> Prop) (q: path) (t: cotree A),
+    P (lookup q t) -> Exists (In_root P) t.
+  Proof.
+    intros A P q.
+    induction q as [|q|q].
+    - destruct t as [l x r].
+      simpl; constructor; simpl; assumption.
+    - destruct t as [l x r]; simpl; intro H.
+      apply Exists_left; simpl.
+      apply (IHq l) in H; assumption.
+    - destruct t as [l x r]; simpl; intro H.
+      apply Exists_right; simpl.
+      apply (IHq r) in H; assumption.
+  Qed.
 
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
@@ -278,13 +324,24 @@ Module CoTrees.
     - apply Forall_right in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
   Qed.
 
-  Lemma ExistsP_NotForallNotP : forall {A} P (t: cotree A),
-   (forall t0, decidable (P t0))
-    -> Exists P t -> ~ Forall (fun t => ~ P t) t.
-  Proof.
-    intros A P t P_dec H.
-    apply ExistsNotNotP_NotForallNotP.
-  Admitted.
+  Section ExistsP_NotForallNotP.
+
+    Variable A: Type.
+    Variable P: cotree A -> Prop.
+
+    Hypothesis P_dec : forall t, decidable (P t).
+    
+    Lemma ExistsP_NotForallNotP : forall t,
+      Exists P t -> ~ Forall (fun t => ~ P t) t.
+    Proof.
+      intros t H.
+      apply ExistsNotNotP_NotForallNotP.
+      replace (fun t => ~ ~ P t) with (P).
+      - assumption.
+      - pose proof (fun t => not_not (P t) (P_dec t)) as P_not_not.
+        Admitted.
+        
+  End ExistsP_NotForallNotP.
 
   Section Map.
     
@@ -312,6 +369,12 @@ Notation cotree_map           := CoTrees.map.
 Notation cotree_root          := CoTrees.root.
 Notation cotree_left          := CoTrees.left.
 Notation cotree_right         := CoTrees.right.
+
+Notation cotree_lookup        := CoTrees.lookup.
+Notation cotree_here          := CoTrees.Here.
+Notation cotree_goleft        := CoTrees.Left.
+Notation cotree_goright       := CoTrees.Right.
+
 Notation cotree_eq            := CoTrees.Eq.
 Notation cotree_eq_refl       := CoTrees.Eq_refl.
 Notation cotree_eq_sym        := CoTrees.Eq_sym.
@@ -321,14 +384,17 @@ Notation cotree_eq_left       := CoTrees.Eq_left.
 Notation cotree_eq_right      := CoTrees.Eq_right.
 Notation cotree_eq_coind      := CoTrees.Eq_coind.
 Notation cotree_exists        := CoTrees.Exists.
-Notation cotree_exists_here   := CoTrees.Here.
-Notation cotree_exists_left   := CoTrees.Left.
-Notation cotree_exists_right  := CoTrees.Right.
+Notation cotree_exists_at     := CoTrees.Exists_at.
+Notation cotree_exists_here   := CoTrees.Exists_here.
+Notation cotree_exists_left   := CoTrees.Exists_left.
+Notation cotree_exists_right  := CoTrees.Exists_right.
 Notation cotree_forall        := CoTrees.Forall.
 Notation cotree_forall_always := CoTrees.Always.
 Notation cotree_forall_here   := CoTrees.Forall_here.
 Notation cotree_forall_left   := CoTrees.Forall_left.
 Notation cotree_forall_right  := CoTrees.Forall_right.
+Notation in_cotree_root       := CoTrees.In_root.
+Notation in_cotree            := CoTrees.In.
     
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
@@ -345,22 +411,20 @@ Module CalkinWilf.
   Definition enum : colist Q := cotree_bf tree.
 
   Local Open Scope Q_scope.
-
-  Definition colist_here_eq (q:Q) (l: colist Q) :=
-    match l with 
-      | cocons p _ => p == q
-    end.
   
-  Theorem enum_contains_1 : colist_exists (colist_here_eq (1#1)) enum.
+  Theorem contains_1 : in_cotree (fun p => p = 1#1) tree.
   Proof. constructor; reflexivity. Qed.
 
-  Definition cotree_here_eq (q:Q) (l: cotree Q) :=
-    match l with
-      | conode _ p _ => p == q
-    end.
-
-  Theorem tree_contains_1 : cotree_exists (cotree_here_eq (1#1)) tree.
-  Proof. constructor; reflexivity. Qed.
+  Theorem contains_2 : in_cotree (fun p => p = 2#1) tree.
+  Proof.
+    apply cotree_exists_right.
+    constructor; reflexivity.
+  Qed.
+  
+  Theorem contains_Q : forall q:Q, in_cotree (fun p => p = Qred q) tree.
+    intros q. 
+    destruct q as [num den].
+  Admitted.
 
 End CalkinWilf.
 
