@@ -371,6 +371,7 @@ Notation cotree_left          := CoTrees.left.
 Notation cotree_right         := CoTrees.right.
 
 Notation cotree_lookup        := CoTrees.lookup.
+Notation cotree_path          := CoTrees.path.
 Notation cotree_here          := CoTrees.Here.
 Notation cotree_goleft        := CoTrees.Left.
 Notation cotree_goright       := CoTrees.Right.
@@ -395,7 +396,35 @@ Notation cotree_forall_left   := CoTrees.Forall_left.
 Notation cotree_forall_right  := CoTrees.Forall_right.
 Notation in_cotree_root       := CoTrees.In_root.
 Notation in_cotree            := CoTrees.In.
-    
+
+(*
+igcd :: (Integer,Integer) -> (Integer,[Bool])
+igcd (m,n) = if m<n then step False (igcd (m,n−m)) else
+if m>n then step True (igcd (m−n,n)) else (m,[ ])
+where step b (d,bs) = (d,b:bs)
+*)
+
+Section pgcd.
+  Local Open Scope N_scope.
+
+  Definition step (qs: cotree_path -> cotree_path) (acc: N*cotree_path) :=
+    match acc with
+      | (d,q0) => (d,qs q0)
+    end.
+
+(** 
+  Obviously, coq does NOT agree with this definition. But the idea
+  is clear: build paths for every Q with igcd, and then create an
+  argument for its existance in SternBrocot.
+
+  Fixpoint igcd (m n:N) :=
+    if (m <? n) then step cotree_goleft  (igcd m (n - m)) else
+    if (n <? m) then step cotree_goright (igcd (m - n) n) else
+      (m, cotree_here).
+*)
+
+End pgcd.
+
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
 
