@@ -5,6 +5,7 @@ Require Import Streams.
 Require Import PArith.
 Require Import NArith.
 Require Import QArith.
+Require Import Recdef.
 
 (** ** CoLists *)
 
@@ -397,14 +398,7 @@ Notation cotree_forall_right  := CoTrees.Forall_right.
 Notation in_cotree_root       := CoTrees.In_root.
 Notation in_cotree            := CoTrees.In.
 
-(*
-igcd :: (Integer,Integer) -> (Integer,[Bool])
-igcd (m,n) = if m<n then step False (igcd (m,n−m)) else
-if m>n then step True (igcd (m−n,n)) else (m,[ ])
-where step b (d,bs) = (d,b:bs)
-*)
-
-Section pgcd.
+Section Euclid.
   Local Open Scope N_scope.
 
   Definition step (qs: cotree_path -> cotree_path) (acc: N*cotree_path) :=
@@ -412,18 +406,31 @@ Section pgcd.
       | (d,q0) => (d,qs q0)
     end.
 
+  Definition pairsum_nat (p: N*N) :=
+    match p with (m,n) => N.to_nat (m + n) end.
+
+  Require Import OrdersFacts.
+
+  Function igcd (p: N*N) {measure pairsum_nat p} :=
+    match p with (m,n) => 
+      if (m <? n) then step cotree_goleft  (igcd (m,(n - m))) else
+      if (n <? m) then step cotree_goright (igcd ((m - n),n)) else
+      (m, cotree_here)
+    end.
+  Proof.
+    intros p m n Hp Hltb; simpl.
+  Admitted.
+  
 (** 
   Obviously, coq does NOT agree with this definition. But the idea
   is clear: build paths for every Q with igcd, and then create an
   argument for its existance in SternBrocot.
 
   Fixpoint igcd (m n:N) :=
-    if (m <? n) then step cotree_goleft  (igcd m (n - m)) else
-    if (n <? m) then step cotree_goright (igcd (m - n) n) else
-      (m, cotree_here).
+
 *)
 
-End pgcd.
+End Euclid.
 
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
