@@ -9,23 +9,28 @@ Require Import Recdef.
 
 (** ** CoLists *)
 
-Module CoLists.
+Module CoList.
 
   (** A [colist] is defined by analogy to the [Stream] datatype,
       so that we can use the high-level predicates defined in the
       [Coq.Lists.Streams] module. *)
 
-  Notation colist   := Stream.
-  Notation cocons   := Cons.
-  Notation Eq       := EqSt.
-  Notation Eq_refl  := EqSt_reflex.
-  Notation Eq_sym   := sym_EqSt.
-  Notation Eq_trans := trans_EqSt.
-  Notation Exists   := Exists.
-  Notation Here     := Here.
-  Notation Further  := Further.
-  Notation Forall   := ForAll.
-  Notation Always   := HereAndFurther.
+  Notation colist         := Stream.
+  Notation cocons         := Cons.
+  Notation Eq             := EqSt.
+  Notation Eq_refl        := EqSt_reflex.
+  Notation Eq_sym         := sym_EqSt.
+  Notation Eq_trans       := trans_EqSt.
+  Notation Exists         := Exists.
+  Notation Exists_here    := Here.
+  Notation Exists_further := Further.
+  Notation Forall         := ForAll.
+  Notation Always         := HereAndFurther.
+  Notation lookup         := Str_nth.
+
+  (** Ensure that [lookup] is transparent. *)
+
+  Hint Unfold lookup.
 
   (** Constructs [colist]s by iteratively unfolding values. *)
 
@@ -45,32 +50,55 @@ Module CoLists.
         end
     end.
 
-  Definition In_head {A: Type} (P: A -> Prop) (l: colist A) : Prop := P (hd l).
-  Definition In {A: Type} (P: A -> Prop) (l: colist A) : Prop := Exists (In_head P) l.
+  Inductive In {A: Type} (P: A -> Prop) (l: colist A) : Prop :=
+  | At (n: nat) : P (lookup n l) -> In P l.
 
-End CoLists.
+  Theorem In_Exists : forall {A: Type} (P: A -> Prop) (l: colist A),
+    In P l -> Exists (fun l => P (hd l)) l.
+  Proof.
+    intros A P l H; elim H; clear H; intro n.
+    generalize l; clear l.
+    induction n as [|n].
+    - intros l H; destruct l as [e l].
+      apply Exists_here; simpl in *; assumption.
+    - intros l H; destruct l as [e l].
+      apply IHn in H; apply Exists_further; simpl; assumption.
+  Qed.
+  
+  Theorem Exists_In : forall {A: Type} (P: A -> Prop) (l: colist A),
+    Exists (fun l => P (hd l)) l -> In P l.
+  Proof.
+    intros A P l H; elim H.
+    - clear H l; intros l H.
+      apply (At P l 0); simpl; assumption.
+    - clear H l; intros l H IH; elim IH; clear IH; intros n IH.
+      apply (At P l (S n)).
+      destruct l as [e l]; simpl in *; assumption.
+  Qed.
+  
+End CoList.
 
-Notation colist                := CoLists.colist.
-Notation cocons                := CoLists.cocons.
-Notation colist_eq             := CoLists.Eq.
-Notation colist_eq_refl        := CoLists.Eq_refl.
-Notation colist_eq_sym         := CoLists.Eq_sym.
-Notation colist_eq_trans       := CoLists.Eq_trans.
-Notation colist_exists         := CoLists.Exists.
-Notation colist_exists_here    := CoLists.Here.
-Notation colist_exists_further := CoLists.Further.
-Notation colist_forall         := CoLists.Forall.
-Notation colist_forall_always  := CoLists.Always.
-Notation colist_unfold         := CoLists.unfold.
-Notation colist_take           := CoLists.take.
-Notation in_colist_head        := CoLists.In_head.
-Notation in_colist             := CoLists.In.
+Notation colist                := CoList.colist.
+Notation cocons                := CoList.cocons.
+Notation colist_eq             := CoList.Eq.
+Notation colist_eq_refl        := CoList.Eq_refl.
+Notation colist_eq_sym         := CoList.Eq_sym.
+Notation colist_eq_trans       := CoList.Eq_trans.
+Notation colist_exists         := CoList.Exists.
+Notation colist_exists_here    := CoList.Exists_here.
+Notation colist_exists_further := CoList.Exists_further.
+Notation colist_forall         := CoList.Forall.
+Notation colist_forall_always  := CoList.Always.
+Notation colist_unfold         := CoList.unfold.
+Notation colist_take           := CoList.take.
+Notation in_colist             := CoList.In.
+Notation in_colist_at          := CoList.At.
+Notation colist_exists_in      := CoList.Exists_In.
+Notation colist_in_exists      := CoList.In_Exists.
 
 (** ** CoTrees *)
 
-Module CoTrees.
-
-  Delimit Scope cotree_scope with cotree.
+Module CoTree.
 
   CoInductive cotree (A: Type) :=
   | conode : cotree A -> A -> cotree A -> cotree A.
@@ -81,28 +109,6 @@ Module CoTrees.
     match f e with
       | (l,x,r) => conode _ (unfold f l) x (unfold f r)
     end.
-
-  (** Performs a breadth-first walk over a forest of [cotree]s, provided that
-      the forest is provably non-empty. *)
-  
-  CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : ts<>nil -> colist A.
-    refine (match ts as xs return xs<>nil -> colist A with
-              | nil       => fun h => _
-              | cons t ts => fun h => 
-                match t with
-                  | conode l x r => cocons x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
-                end
-            end).
-    exfalso; apply h; reflexivity.
-    apply not_eq_sym; apply app_cons_not_nil.
-  Defined.
-
-  (** Performs a breadth-first walk over a [cotree], returning a [colist]. *)
-  
-  Definition bf {A: Type} (t: cotree A) : colist A.
-    refine (bf_acc (t :: nil) _).
-    apply not_eq_sym; apply nil_cons.
-  Defined.
 
   (** Returns the [root] of a [cotree], which is the topmost value. *)
 
@@ -234,33 +240,55 @@ Module CoTrees.
       apply Eq_trans.
   Qed.
 
+  (** [In] defines proofs on the elements of a [cotree]. *)
+
+  Inductive In {A: Type} (P: A -> Prop) (t: cotree A) : Prop :=
+  | At (p: path) : P (lookup p t) -> In P t.
+
+  (** [Exists] defines proofs on the subtrees of a [cotree] *)
+
   Inductive Exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Exists_here  : P t -> Exists P t
   | Exists_left  : Exists P (left t) -> Exists P t
   | Exists_right : Exists P (right t) -> Exists P t.
 
-  Definition In_root {A: Type} (P: A -> Prop) (t: cotree A) : Prop :=
-    match t with
-      | conode _ x _ => P x
-    end.
+  (** Duality of [In] and [Exists]: A proof for [In] is equivalent to a proof
+      for [Exists] with a predicate on the root of the subtree. *)
 
-  Definition In {A: Type} (P: A -> Prop) (t: cotree A) : Prop :=
-    Exists (In_root P) t.
-  
-  Theorem Exists_at : forall {A: Type} (P: A -> Prop) (q: path) (t: cotree A),
-    P (lookup q t) -> Exists (In_root P) t.
+  Theorem In_Exists : forall {A: Type} (P: A -> Prop) (t: cotree A),
+    In P t -> Exists (fun t => P (root t)) t.
   Proof.
-    intros A P q.
-    induction q as [|q|q].
-    - destruct t as [l x r].
-      simpl; constructor; simpl; assumption.
-    - destruct t as [l x r]; simpl; intro H.
-      apply Exists_left; simpl.
-      apply (IHq l) in H; assumption.
-    - destruct t as [l x r]; simpl; intro H.
-      apply Exists_right; simpl.
-      apply (IHq r) in H; assumption.
+    intros A P t H; elim H; clear H; intro p.
+    generalize t; clear t.
+    induction p as [|p|p].
+    - intros t H; destruct t as [l x r]; apply Exists_here; simpl in *; assumption.
+    - intros t H; destruct t as [l x r]; simpl in *.
+      apply IHp in H; apply Exists_left; simpl; assumption.
+    - intros t H; destruct t as [l x r]; simpl in *.
+      apply IHp in H; apply Exists_right; simpl; assumption.
   Qed.
+  
+  Theorem Exists_In : forall {A: Type} (P: A -> Prop) (t: cotree A),
+    Exists (fun t => P (root t)) t -> In P t.
+  Proof.
+    intros A P t H; elim H.
+    - clear H t; intros t H.
+      apply (At P t Here); destruct t as [l x r]; simpl in *; assumption.
+    - clear H t; intros t H IH; elim IH; clear IH; intros p IH.
+      apply (At P t (Left p)).
+      destruct t as [l x r]; simpl in *; assumption.
+    - clear H t; intros t H IH; elim IH; clear IH; intros p IH.
+      apply (At P t (Right p)).
+      destruct t as [l x r]; simpl in *; assumption.
+  Qed.
+
+  Theorem Exists_At : forall {A: Type} (P: A -> Prop) (p: path) (t: cotree A),
+    P (lookup p t) -> Exists (fun t => P (root t)) t.
+  Proof.
+    intros A P p t H; apply (At P t p) in H; apply In_Exists; assumption.
+  Qed.
+
+  (** [Forall] defines a proof on all subtrees of a [cotree] *)
 
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
@@ -312,8 +340,6 @@ Module CoTrees.
     - apply Forall_left  in H; apply IHL in H; assumption.
     - apply Forall_right in H; apply IHR in H; assumption.
   Qed.
-  
-  Require Import Coq.Logic.Decidable.
 
   Lemma ExistsNotNotP_NotForallNotP : forall {A} P (t: cotree A),
     Exists (fun t => ~ ~ P t) t -> ~ Forall (fun t => ~P t) t.
@@ -324,25 +350,6 @@ Module CoTrees.
     - apply Forall_left  in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
     - apply Forall_right in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
   Qed.
-
-  Section ExistsP_NotForallNotP.
-
-    Variable A: Type.
-    Variable P: cotree A -> Prop.
-
-    Hypothesis P_dec : forall t, decidable (P t).
-    
-    Lemma ExistsP_NotForallNotP : forall t,
-      Exists P t -> ~ Forall (fun t => ~ P t) t.
-    Proof.
-      intros t H.
-      apply ExistsNotNotP_NotForallNotP.
-      replace (fun t => ~ ~ P t) with (P).
-      - assumption.
-      - pose proof (fun t => not_not (P t) (P_dec t)) as P_not_not.
-        Admitted.
-        
-  End ExistsP_NotForallNotP.
 
   Section Map.
     
@@ -355,118 +362,91 @@ Module CoTrees.
     
     Theorem Forall_map : forall {A B: Type} (P: cotree B -> Prop) (f: A -> B) (t: cotree A),
       Forall (fun t => P (map f t)) t -> Forall P (map f t).
-    Admitted.
-    
+    Proof.
+      intros A B P f; cofix; intros t H.
+      constructor.
+      - apply Forall_here in H; assumption.
+      - apply Forall_left in H.
+        destruct t as [l x r]; simpl in *.
+        apply Forall_map in H; assumption.
+      - apply Forall_right in H.
+        destruct t as [l x r]; simpl in *.
+        apply Forall_map in H; assumption.
+    Qed.
+
   End Map.
-End CoTrees.
 
-(** Import [CoTrees] into the global scope. *)
+  Section Enumerate.
 
-Notation cotree               := CoTrees.cotree.
-Notation conode               := CoTrees.conode.
-Notation cotree_unfold        := CoTrees.unfold.
-Notation cotree_bf            := CoTrees.bf.
-Notation cotree_map           := CoTrees.map.
-Notation cotree_root          := CoTrees.root.
-Notation cotree_left          := CoTrees.left.
-Notation cotree_right         := CoTrees.right.
-
-Notation cotree_lookup        := CoTrees.lookup.
-Notation cotree_path          := CoTrees.path.
-Notation cotree_here          := CoTrees.Here.
-Notation cotree_goleft        := CoTrees.Left.
-Notation cotree_goright       := CoTrees.Right.
-
-Notation cotree_eq            := CoTrees.Eq.
-Notation cotree_eq_refl       := CoTrees.Eq_refl.
-Notation cotree_eq_sym        := CoTrees.Eq_sym.
-Notation cotree_eq_trans      := CoTrees.Eq_trans.
-Notation cotree_eq_root       := CoTrees.Eq_root.
-Notation cotree_eq_left       := CoTrees.Eq_left.
-Notation cotree_eq_right      := CoTrees.Eq_right.
-Notation cotree_eq_coind      := CoTrees.Eq_coind.
-Notation cotree_exists        := CoTrees.Exists.
-Notation cotree_exists_at     := CoTrees.Exists_at.
-Notation cotree_exists_here   := CoTrees.Exists_here.
-Notation cotree_exists_left   := CoTrees.Exists_left.
-Notation cotree_exists_right  := CoTrees.Exists_right.
-Notation cotree_forall        := CoTrees.Forall.
-Notation cotree_forall_always := CoTrees.Always.
-Notation cotree_forall_here   := CoTrees.Forall_here.
-Notation cotree_forall_left   := CoTrees.Forall_left.
-Notation cotree_forall_right  := CoTrees.Forall_right.
-Notation in_cotree_root       := CoTrees.In_root.
-Notation in_cotree            := CoTrees.In.
-
-Section Euclid.
-  Local Open Scope N_scope.
-
-  Definition step (qs: cotree_path -> cotree_path) (acc: N*cotree_path) :=
-    match acc with
-      | (d,q0) => (d,qs q0)
-    end.
-
-  Definition pairsum_nat (p: N*N) :=
-    match p with (m,n) => N.to_nat (m + n) end.
-
-  Require Import OrdersFacts.
-
-  Function igcd (p: N*N) {measure pairsum_nat p} :=
-    match p with (m,n) => 
-      if (m <? n) then step cotree_goleft  (igcd (m,(n - m))) else
-      if (n <? m) then step cotree_goright (igcd ((m - n),n)) else
-      (m, cotree_here)
-    end.
-  Proof.
-    intros p m n Hp Hltb; simpl.
-  Admitted.
+    (** Performs a breadth-first walk over a forest of [cotree]s, provided that
+        the forest is provably non-empty. *)
   
-(** 
-  Obviously, coq does NOT agree with this definition. But the idea
-  is clear: build paths for every Q with igcd, and then create an
-  argument for its existance in SternBrocot.
+    CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : ts<>nil -> colist A.
+      refine (match ts as xs return xs<>nil -> colist A with
+                | nil       => fun h => _
+                | cons t ts => fun h =>
+                  match t with
+                    | conode l x r => cocons x (bf_acc _ (ts ++ (cons l (cons r nil))) _)
+                  end
+              end).
+      exfalso; apply h; reflexivity.
+      apply not_eq_sym; apply app_cons_not_nil.
+    Defined.
 
-  Fixpoint igcd (m n:N) :=
+    (** Performs a breadth-first walk over a [cotree], returning a [colist]. *)
+    
+    Definition bf {A: Type} (t: cotree A) : colist A.
+      refine (bf_acc (t :: nil) _).
+      apply not_eq_sym; apply nil_cons.
+    Defined.
 
-*)
+    Theorem In_bf : forall {A: Type} (P: A -> Prop) (t: cotree A),
+      In P t -> in_colist P (bf t).
+    Proof.
+    Admitted.
 
-End Euclid.
+  End Enumerate.
+    
+End CoTree.
 
-(** ** The Calkin-Wilf Tree *)
-Module CalkinWilf.
+(** Import [CoTree] into the global scope. *)
 
-  Local Open Scope positive_scope.
-
-  Definition next (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
-    match q with
-      | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
-    end.
-  
-  Definition tree : cotree Q := cotree_unfold next (1,1).
-  
-  Definition enum : colist Q := cotree_bf tree.
-
-  Local Open Scope Q_scope.
-  
-  Theorem contains_1 : in_cotree (fun p => p = 1#1) tree.
-  Proof. constructor; reflexivity. Qed.
-
-  Theorem contains_2 : in_cotree (fun p => p = 2#1) tree.
-  Proof.
-    apply cotree_exists_right.
-    constructor; reflexivity.
-  Qed.
-  
-  Theorem contains_Q : forall q:Q, in_cotree (fun p => p = Qred q) tree.
-    intros q. 
-    destruct q as [num den].
-  Admitted.
-
-End CalkinWilf.
-
-Notation calkin_wilf_next := CalkinWilf.next.
-Notation calkin_wilf_tree := CalkinWilf.tree.
-Notation calkin_wilf_enum := CalkinWilf.enum.
+Notation cotree               := CoTree.cotree.
+Notation conode               := CoTree.conode.
+Notation cotree_unfold        := CoTree.unfold.
+Notation cotree_bf            := CoTree.bf.
+Notation cotree_map           := CoTree.map.
+Notation cotree_root          := CoTree.root.
+Notation cotree_left          := CoTree.left.
+Notation cotree_right         := CoTree.right.
+Notation cotree_lookup        := CoTree.lookup.
+Notation cotree_path          := CoTree.path.
+Notation cotree_here          := CoTree.Here.
+Notation cotree_goleft        := CoTree.Left.
+Notation cotree_goright       := CoTree.Right.
+Notation cotree_eq            := CoTree.Eq.
+Notation cotree_eq_refl       := CoTree.Eq_refl.
+Notation cotree_eq_sym        := CoTree.Eq_sym.
+Notation cotree_eq_trans      := CoTree.Eq_trans.
+Notation cotree_eq_root       := CoTree.Eq_root.
+Notation cotree_eq_left       := CoTree.Eq_left.
+Notation cotree_eq_right      := CoTree.Eq_right.
+Notation cotree_eq_coind      := CoTree.Eq_coind.
+Notation cotree_exists        := CoTree.Exists.
+Notation cotree_exists_at     := CoTree.Exists_at.
+Notation cotree_exists_here   := CoTree.Exists_here.
+Notation cotree_exists_left   := CoTree.Exists_left.
+Notation cotree_exists_right  := CoTree.Exists_right.
+Notation cotree_forall        := CoTree.Forall.
+Notation cotree_forall_always := CoTree.Always.
+Notation cotree_forall_here   := CoTree.Forall_here.
+Notation cotree_forall_left   := CoTree.Forall_left.
+Notation cotree_forall_right  := CoTree.Forall_right.
+Notation cotree_forall_map    := CoTree.Forall_map.
+Notation in_cotree            := CoTree.In.
+Notation in_cotree_at         := CoTree.At.
+Notation cotree_equals_in     := CoTree.Equals_In.
+Notation cotree_in_equals     := CoTree.In_Equals.
 
 (** ** The Stern-Brocot Tree *)
 Module SternBrocot.
@@ -505,54 +485,116 @@ Module SternBrocot.
     Lemma Npos_over_Nplus_r : forall n m : N,
       m <> 0 -> n + m <> 0.
     Proof.
-      intros n m.
-      rewrite Nplus_comm.
-      apply Npos_over_Nplus_l.
+      intros; rewrite Nplus_comm; apply Npos_over_Nplus_l; assumption.
     Qed.
     
     Lemma Npos_over_Nplus : forall n m : N,
       n <> 0 \/ m <> 0 -> n + m <> 0.
     Proof.
-      intros n m H.
-      elim H.
-      - apply Npos_over_Nplus_l.
-      - apply Npos_over_Nplus_r.
+      intros n m H; elim H; [apply Npos_over_Nplus_l|apply Npos_over_Nplus_r].
     Qed.
 
   End N_Properties.
 
   (** *** Construction of the Tree *)
 
-  Inductive Qpair : Type :=
-  | qpair (a b c d : N) (HL: a<>0 \/ c<>0) (HR: b<>0 \/ d<>0) : Qpair.
+  Section SternBrocotDef.
 
-  Definition next (q:Qpair) : Qpair*Q*Qpair.
-    refine (match q with
-              | qpair a b c d HL HR =>
-                let ac := a + c in
-                let bd := b + d in
-                let l  := qpair a  b  ac bd _ _ in
-                let r  := qpair ac bd  c  d _ _ in
-                let q  := N_Z ac # N_pos bd _ in
-                (l,q,r)
-            end).
-    - right; unfold ac; apply Npos_over_Nplus in HL; assumption.
-    - right; unfold bd; apply Npos_over_Nplus in HR; assumption.
-    - left ; unfold ac; apply Npos_over_Nplus in HL; assumption.
-    - left ; unfold bd; apply Npos_over_Nplus in HR; assumption.
-    - unfold bd; apply Npos_over_Nplus in HR; assumption.
-  Defined.
+    Inductive Qpair : Type :=
+    | qpair (a b c d : N) (HL: a<>0 \/ c<>0) (HR: b<>0 \/ d<>0) : Qpair.
+    
+    Definition next (q:Qpair) : Qpair*Q*Qpair.
+      refine (match q with
+                | qpair a b c d HL HR =>
+                  let ac := a + c in
+                  let bd := b + d in
+                  let l  := qpair a  b  ac bd _ _ in
+                  let r  := qpair ac bd  c  d _ _ in
+                  let q  := N_Z ac # N_pos bd _ in
+                  (l,q,r)
+              end).
+      - right; unfold ac; apply Npos_over_Nplus in HL; assumption.
+      - right; unfold bd; apply Npos_over_Nplus in HR; assumption.
+      - left ; unfold ac; apply Npos_over_Nplus in HL; assumption.
+      - left ; unfold bd; apply Npos_over_Nplus in HR; assumption.
+      -        unfold bd; apply Npos_over_Nplus in HR; assumption.
+    Defined.
 
-  Definition tree : cotree Q.
-    refine (cotree_unfold next (qpair 0 1 1 0 _ _)).
-    - right; discriminate.
-    - left ; discriminate.
-  Defined.
-  
-  Definition enum : colist Q := cotree_bf tree.
+    Definition tree : cotree Q.
+      refine (cotree_unfold next (qpair 0 1 1 0 _ _)).
+      - right ; discriminate.
+      - left  ; discriminate.
+    Defined.
+    
+    Definition enum : colist Q := cotree_bf tree.
+
+  End SternBrocotDef.
+
+  Section GcdPath.
+
+    (** *** Computational Trace of a GCD Computation *)
+
+    Definition step (qs: cotree_path -> cotree_path) (acc: N*cotree_path) :=
+      match acc with
+        | (d,q0) => (d,qs q0)
+      end.
+
+    Definition pairsum (p: N*N) :=
+      match p with (m,n) => N.to_nat (m + n) end.
+
+    Function gcd_path (p: N*N) {measure pairsum p} :=
+      match p with (m,n) => 
+        if (m <? n) then step cotree_goleft (gcd_path (m,(n - m))) else
+        if (n <? m) then step cotree_goright (gcd_path ((m - n),n)) else
+        (m, cotree_here)
+      end.
+    Proof.
+      intros p m n Hp Hltb; simpl.
+      pose proof (N.ltb_spec m n) as Hlt.
+      destruct Hlt as [Hlt|Hlt].
+    Admitted.
+
+  End GcdPath.
   
 End SternBrocot.
 
 Notation stern_brocot_next := SternBrocot.next.
 Notation stern_brocot_tree := SternBrocot.tree.
 Notation stern_brocot_enum := SternBrocot.enum.
+
+(** ** The Calkin-Wilf Tree *)
+Module CalkinWilf.
+
+  Local Open Scope positive_scope.
+
+  Definition next (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
+    match q with
+      | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
+    end.
+  
+  Definition tree : cotree Q := cotree_unfold next (1,1).
+  
+  Definition enum : colist Q := cotree_bf tree.
+
+  Local Open Scope Q_scope.
+  
+  Theorem contains_1 : in_cotree (fun p => p = 1#1) tree.
+  Proof. constructor; reflexivity. Qed.
+
+  Theorem contains_2 : in_cotree (fun p => p = 2#1) tree.
+  Proof.
+    apply cotree_exists_right.
+    constructor; reflexivity.
+  Qed.
+  
+  Theorem contains_Q : forall q:Q, in_cotree (fun p => p = Qred q) tree.
+    intros q. 
+    destruct q as [num den].
+  Admitted.
+
+End CalkinWilf.
+
+Notation calkin_wilf_next := CalkinWilf.next.
+Notation calkin_wilf_tree := CalkinWilf.tree.
+Notation calkin_wilf_enum := CalkinWilf.enum.
+
