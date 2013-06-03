@@ -91,15 +91,30 @@ Module CoList.
     apply (At_Exists P xs n); rewrite HM in HP; assumption.
   Qed.
 
+  Theorem Exists_In : forall {A: Type} (P: A -> Prop) (xs: colist A),
+    Exists (fun l => P (hd l)) xs -> exists x, P x /\ In x xs.
+  Proof.
+    intros A P xs H; elim H; clear H xs.
+    - intros xs H; exists (hd xs); split.
+      * assumption.
+      * apply In_here; reflexivity.
+    - intros xs H IH; elim IH; clear IH; intros x IH; elim IH; clear IH.
+      intros HP IH; exists x; split.
+      * assumption.
+      * apply In_further; assumption.
+  Qed.
+
   Lemma Forall_here : forall {A: Type} (P: A -> Prop) xs,
     Forall (fun l => P (hd l)) xs -> P (hd xs).
   Proof.
-  Admitted.
+    intros A P xs H; destruct H; assumption.
+  Qed.
 
   Lemma Forall_further : forall {A: Type} (P: colist A -> Prop) xs,
     Forall P xs -> Forall P (tl xs).
   Proof.
-  Admitted.
+    intros A P xs H; destruct H; assumption.
+  Qed.
 
   Theorem Forall_In : forall {A: Type} (P: A -> Prop) xs,
     Forall (fun l => P (hd l)) xs -> forall x, In x xs -> P x.
@@ -120,19 +135,27 @@ End CoList.
 
 Notation colist                := CoList.colist.
 Notation cocons                := CoList.cocons.
+Notation colist_unfold         := CoList.unfold.
+Notation colist_take           := CoList.take.
+
+(** Various proofs on [colist]s. *)
+
 Notation colist_eq             := CoList.Eq.
 Notation colist_eq_refl        := CoList.Eq_refl.
 Notation colist_eq_sym         := CoList.Eq_sym.
 Notation colist_eq_trans       := CoList.Eq_trans.
+
 Notation colist_exists         := CoList.Exists.
 Notation colist_exists_here    := CoList.Exists_here.
 Notation colist_exists_further := CoList.Exists_further.
+
 Notation colist_forall         := CoList.Forall.
 Notation colist_forall_always  := CoList.Always.
-Notation colist_unfold         := CoList.unfold.
-Notation colist_take           := CoList.take.
+
 Notation in_colist             := CoList.In.
 Notation in_colist_at          := CoList.At.
+Notation colist_in_at          := CoList.In_At.
+Notation colist_at_exists      := CoList.At_Exists.
 Notation colist_exists_in      := CoList.Exists_In.
 Notation colist_in_exists      := CoList.In_Exists.
 
@@ -180,13 +203,10 @@ Module CoTree.
   | Right : path -> path.
 
   Fixpoint lookup {A: Type} (p: path) (t: cotree A) : A :=
-    match t with
-      | conode l x r =>
-        match p with
-          | Here    => x
-          | Left  p => lookup p l
-          | Right p => lookup p r
-        end
+    match p with
+      | Here    => root t
+      | Left  p => lookup p (left t)
+      | Right p => lookup p (right t)
     end.
         
   (** Equality as defined on [cotree]s; to prove (co)equality,
@@ -283,10 +303,28 @@ Module CoTree.
   (** [In] defines proofs on the elements of a [cotree]. *)
   
   Inductive In {A: Type} (x: A) (t: cotree A) : Prop :=
-  | In_root  : (x = root t) -> In x t.
-  | In_left  : In x (left t) -> In x t.
+  | In_root  : (x = root t) -> In x t
+  | In_left  : In x (left t) -> In x t
   | In_right : In x (right t) -> In x t.
 
+  Definition At : forall {A: Type} (x: A) (t: cotree A) (p: path), (x = lookup p t) -> In x t.
+  Proof.
+    intros A x t p; generalize t; clear t.
+    induction p as [|p|p].
+    - apply In_root.
+    - intros t H; apply In_left ; destruct t as [l y r]; simpl in *; apply IHp in H; assumption.
+    - intros t H; apply In_right; destruct t as [l y r]; simpl in *; apply IHp in H; assumption.
+  Defined.
+
+  Theorem In_At : forall {A: Type} (x: A) (t: cotree A),
+    In x t -> exists p, x = lookup p t.
+  Proof.
+    intros A x t H; elim H; clear H t.
+    - intros t H; exists Here; destruct t as [l y r]; simpl in *; assumption.
+    - intros t H IH; elim IH; clear IH; intros p IH; exists (Left  p); destruct t; simpl in *; assumption.
+    - intros t H IH; elim IH; clear IH; intros p IH; exists (Right p); destruct t; simpl in *; assumption.
+  Qed.
+    
   (** [Exists] defines proofs on the subtrees of a [cotree] *)
 
   Inductive Exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
@@ -294,40 +332,34 @@ Module CoTree.
   | Exists_left  : Exists P (left t) -> Exists P t
   | Exists_right : Exists P (right t) -> Exists P t.
 
-  (** Duality of [In] and [Exists]: A proof for [In] is equivalent to a proof
-      for [Exists] with a predicate on the root of the subtree. *)
-
-  Theorem In_Exists : forall {A: Type} (P: A -> Prop) (t: cotree A),
-    In P t -> Exists (fun t => P (root t)) t.
-  Proof.
-    intros A P t H; elim H; clear H; intro p.
-    generalize t; clear t.
-    induction p as [|p|p].
-    - intros t H; destruct t as [l x r]; apply Exists_here; simpl in *; assumption.
-    - intros t H; destruct t as [l x r]; simpl in *.
-      apply IHp in H; apply Exists_left; simpl; assumption.
-    - intros t H; destruct t as [l x r]; simpl in *.
-      apply IHp in H; apply Exists_right; simpl; assumption.
-  Qed.
-  
-  Theorem Exists_In : forall {A: Type} (P: A -> Prop) (t: cotree A),
-    Exists (fun t => P (root t)) t -> In P t.
-  Proof.
-    intros A P t H; elim H.
-    - clear H t; intros t H.
-      apply (At P t Here); destruct t as [l x r]; simpl in *; assumption.
-    - clear H t; intros t H IH; elim IH; clear IH; intros p IH.
-      apply (At P t (Left p)).
-      destruct t as [l x r]; simpl in *; assumption.
-    - clear H t; intros t H IH; elim IH; clear IH; intros p IH.
-      apply (At P t (Right p)).
-      destruct t as [l x r]; simpl in *; assumption.
-  Qed.
-
-  Theorem Exists_At : forall {A: Type} (P: A -> Prop) (p: path) (t: cotree A),
+  Definition At_Exists : forall {A: Type} (P: A -> Prop) (t: cotree A) (p: path),
     P (lookup p t) -> Exists (fun t => P (root t)) t.
   Proof.
-    intros A P p t H; apply (At P t p) in H; apply In_Exists; assumption.
+    intros A P t p; generalize t; clear t.
+    induction p as [|p|p].
+    - intro t; simpl; intro H; apply Exists_here ; assumption.
+    - intro t; simpl; intro H; apply Exists_left ; apply IHp in H; assumption.
+    - intro t; simpl; intro H; apply Exists_right; apply IHp in H; assumption.
+  Qed.
+
+  Theorem In_Exists : forall {A: Type} (P: A -> Prop) (x: A) (t: cotree A),
+    P x /\ In x t -> Exists (fun t => P (root t)) t.
+  Proof.
+    intros A P x t H; elim H; intros HP IH.
+    apply In_At in IH; elim IH; clear IH; intros p IH.
+    apply (At_Exists P t p); rewrite IH in HP; assumption.
+  Qed.
+
+  Definition Exists_In : forall {A: Type} (P: A -> Prop) (t: cotree A),
+    Exists (fun t => P (root t)) t -> exists x, P x /\ In x t.
+  Proof.
+    intros A P t H; elim H; clear H t.
+    - intros t H; exists (root t); split.
+      assumption. apply In_root; reflexivity.
+    - intros t H IH; elim IH; clear IH; intros x IH; elim IH; clear IH.
+      intros HP IH; exists x; split. assumption. apply In_left; assumption.
+    - intros t H IH; elim IH; clear IH; intros x IH; elim IH; clear IH.
+      intros HP IH; exists x; split. assumption. apply In_right; assumption.
   Qed.
 
   (** [Forall] defines a proof on all subtrees of a [cotree] *)
@@ -365,7 +397,7 @@ Module CoTree.
     intros A P t H; destruct H as [H0 HL HR]; assumption.
   Qed.
 
-  Lemma ForallP_ExistsP : forall {A} P (t: cotree A),
+  Theorem ForallP_ExistsP : forall {A} P (t: cotree A),
     Forall P t -> Exists P t.
   Proof.
     intros A P t.
@@ -373,7 +405,7 @@ Module CoTree.
     constructor; assumption.
   Qed.
 
-  Lemma ForallP_NotExistsNotP : forall {A} P (t: cotree A),
+  Theorem ForallP_NotExistsNotP : forall {A} P (t: cotree A),
     Forall P t -> ~(Exists (fun t => ~P t) t).
   Proof.
     intros A P t H F.
@@ -383,7 +415,7 @@ Module CoTree.
     - apply Forall_right in H; apply IHR in H; assumption.
   Qed.
 
-  Lemma ExistsNotNotP_NotForallNotP : forall {A} P (t: cotree A),
+  Theorem ExistsNotNotP_NotForallNotP : forall {A} P (t: cotree A),
     Exists (fun t => ~ ~ P t) t -> ~ Forall (fun t => ~P t) t.
   Proof. 
     intros A P t H F.
@@ -391,6 +423,23 @@ Module CoTree.
     - apply Forall_here  in F; elim H; assumption.
     - apply Forall_left  in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
     - apply Forall_right in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
+  Qed.
+
+  Theorem In_Forall : forall {A} (P: A -> Prop) t,
+    (forall x t, In x t -> P x) -> Forall (fun t => P (root t)) t.
+  Proof.
+    intros A P t H.
+    constructor.
+    - apply (H (root t) t). apply In_root. reflexivity.
+  Admitted.
+      
+  Theorem Forall_In : forall {A} P (t: cotree A),
+    Forall (fun t => P (root t)) t -> forall x, In x t -> P x.
+  Proof.
+    intros A P t H x IH; generalize H; clear H; elim IH; clear IH t.
+    - intros t H0 H; rewrite H0. apply Forall_here in H; assumption.
+    - intros t H0 IH H. apply Forall_left  in H; apply IH in H. assumption.
+    - intros t H0 IH H. apply Forall_right in H; apply IH in H. assumption.
   Qed.
 
   Section Map.
@@ -530,7 +579,7 @@ Module SternBrocot.
       intros; rewrite Nplus_comm; apply Npos_over_Nplus_l; assumption.
     Qed.
     
-    Lemma Npos_over_Nplus : forall n m : N,
+    Theorem Npos_over_Nplus : forall n m : N,
       n <> 0 \/ m <> 0 -> n + m <> 0.
     Proof.
       intros n m H; elim H; [apply Npos_over_Nplus_l|apply Npos_over_Nplus_r].
