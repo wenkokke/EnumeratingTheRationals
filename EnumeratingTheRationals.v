@@ -234,7 +234,7 @@ Module CoTree.
     intros A t1 t2 H; destruct H; simpl; assumption.
   Qed.
 
-  Section Eq_coind.
+  Section Eq_coind_def.
     Variable A: Type.
     Variable R: cotree A -> cotree A -> Prop.
     
@@ -255,7 +255,7 @@ Module CoTree.
       - apply Case_right in H; simpl in H.
         apply Eq_coind; assumption.
     Qed.
-  End Eq_coind.
+  End Eq_coind_def.
   
   Theorem Eq_refl : forall {A: Type} (t: cotree A), Eq t t.
     intros A t.
@@ -367,7 +367,7 @@ Module CoTree.
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
 
-  Section Forall_coind.
+  Section Forall_coind_def.
     Variable A: Type.
     Variable P: cotree A -> Prop.
     Variable R: cotree A -> Prop.
@@ -383,7 +383,7 @@ Module CoTree.
       - apply Case_left  in H; apply Forall_coind in H; assumption.
       - apply Case_right in H; apply Forall_coind in H; assumption.
     Qed.
-  End Forall_coind.
+  End Forall_coind_def.
 
   Lemma Forall_here : forall {A} P (t: cotree A), Forall P t -> P t.
     intros A P t H; destruct H as [H0 HL HR]; assumption.
@@ -442,7 +442,7 @@ Module CoTree.
     - intros t H0 IH H. apply Forall_right in H; apply IH in H. assumption.
   Qed.
 
-  Section Map.
+  Section map_def.
     
     (** Definition of [map] over [cotree]s. *)
 
@@ -465,9 +465,9 @@ Module CoTree.
         apply Forall_map in H; assumption.
     Qed.
 
-  End Map.
+  End map_def.
 
-  Section Enumerate.
+  Section bf_def.
 
     (** Performs a breadth-first walk over a forest of [cotree]s, provided that
         the forest is provably non-empty. *)
@@ -491,12 +491,12 @@ Module CoTree.
       apply not_eq_sym; apply nil_cons.
     Defined.
 
-    Theorem In_bf : forall {A: Type} (P: A -> Prop) (t: cotree A),
-      In P t -> in_colist P (bf t).
+    Theorem In_bf : forall {A} x (t: cotree A),
+      In x t -> CoList.In x (bf t).
     Proof.
     Admitted.
 
-  End Enumerate.
+  End bf_def.
     
 End CoTree.
 
@@ -524,7 +524,7 @@ Notation cotree_eq_left       := CoTree.Eq_left.
 Notation cotree_eq_right      := CoTree.Eq_right.
 Notation cotree_eq_coind      := CoTree.Eq_coind.
 Notation cotree_exists        := CoTree.Exists.
-Notation cotree_exists_at     := CoTree.Exists_at.
+Notation cotree_exists_in     := CoTree.Exists_In.
 Notation cotree_exists_here   := CoTree.Exists_here.
 Notation cotree_exists_left   := CoTree.Exists_left.
 Notation cotree_exists_right  := CoTree.Exists_right.
@@ -534,19 +534,19 @@ Notation cotree_forall_here   := CoTree.Forall_here.
 Notation cotree_forall_left   := CoTree.Forall_left.
 Notation cotree_forall_right  := CoTree.Forall_right.
 Notation cotree_forall_map    := CoTree.Forall_map.
+Notation cotree_at            := CoTree.At.
 Notation in_cotree            := CoTree.In.
-Notation in_cotree_at         := CoTree.At.
-Notation cotree_equals_in     := CoTree.Equals_In.
-Notation cotree_in_equals     := CoTree.In_Equals.
+Notation in_cotree_at         := CoTree.In_At.
+Notation in_cotree_exists     := CoTree.In_Exists.
 
 (** ** The Stern-Brocot Tree *)
 Module SternBrocot.
 
   (** *** Required Proofs on Natural Numbers *)
 
-  Local Open Scope N_scope.
-  
-  Section N_Properties.
+  Section N_properties.
+
+    Local Open Scope N_scope. 
 
     Definition N_pos (n:N) : n<>0 -> positive.
       refine (match n as n' return n'<>0 -> positive with
@@ -585,11 +585,13 @@ Module SternBrocot.
       intros n m H; elim H; [apply Npos_over_Nplus_l|apply Npos_over_Nplus_r].
     Qed.
 
-  End N_Properties.
+  End N_properties.
 
   (** *** Construction of the Tree *)
 
-  Section SternBrocotDef.
+  Section tree_def.
+
+    Local Open Scope N_scope.
 
     Inductive Qpair : Type :=
     | qpair (a b c d : N) (HL: a<>0 \/ c<>0) (HR: b<>0 \/ d<>0) : Qpair.
@@ -608,7 +610,7 @@ Module SternBrocot.
       - right; unfold bd; apply Npos_over_Nplus in HR; assumption.
       - left ; unfold ac; apply Npos_over_Nplus in HL; assumption.
       - left ; unfold bd; apply Npos_over_Nplus in HR; assumption.
-      -        unfold bd; apply Npos_over_Nplus in HR; assumption.
+      - unfold bd; apply Npos_over_Nplus in HR; assumption.
     Defined.
 
     Definition tree : cotree Q.
@@ -617,11 +619,17 @@ Module SternBrocot.
       - left  ; discriminate.
     Defined.
     
+  End tree_def.
+
+  Section enum_def.
+
     Definition enum : colist Q := cotree_bf tree.
 
-  End SternBrocotDef.
+  End enum_def.
 
-  Section GcdPath.
+  Section gcd_trace_def.
+
+    Local Open Scope N_scope. 
 
     (** *** Computational Trace of a GCD Computation *)
 
@@ -633,19 +641,29 @@ Module SternBrocot.
     Definition pairsum (p: N*N) :=
       match p with (m,n) => N.to_nat (m + n) end.
 
-    Function gcd_path (p: N*N) {measure pairsum p} :=
+    Section Nnat_over_lt_def.
+      Lemma Nnat_over_lt : forall m n, (N.to_nat m < N.to_nat n)%nat -> (m < n)%N.
+      Proof.
+        intros m n H.
+        induction m as [|m].
+        - induction n as [|n].
+          * apply lt_irrefl in H; inversion H.
+          * Admitted.
+    End Nnat_over_lt_def.
+
+    Function gcd_trace (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
-        if (m <? n) then step cotree_goleft (gcd_path (m,(n - m))) else
-        if (n <? m) then step cotree_goright (gcd_path ((m - n),n)) else
+        if (m <? n) then step cotree_goleft (gcd_trace (m,(n - m))) else
+        if (n <? m) then step cotree_goright (gcd_trace ((m - n),n)) else
         (m, cotree_here)
       end.
     Proof.
       intros p m n Hp Hltb; simpl.
-      pose proof (N.ltb_spec m n) as Hlt.
-      destruct Hlt as [Hlt|Hlt].
+      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt].
+      rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub.
     Admitted.
 
-  End GcdPath.
+  End gcd_trace_def.
   
 End SternBrocot.
 
@@ -658,30 +676,22 @@ Module CalkinWilf.
 
   Local Open Scope positive_scope.
 
-  Definition next (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
-    match q with
-      | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
-    end.
-  
-  Definition tree : cotree Q := cotree_unfold next (1,1).
-  
-  Definition enum : colist Q := cotree_bf tree.
+  Section tree_def.
 
-  Local Open Scope Q_scope.
+    Definition next (q:positive*positive) : (positive*positive)*Q*(positive*positive) :=
+      match q with
+        | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
+      end.
   
-  Theorem contains_1 : in_cotree (fun p => p = 1#1) tree.
-  Proof. constructor; reflexivity. Qed.
+    Definition tree : cotree Q := cotree_unfold next (1,1).
 
-  Theorem contains_2 : in_cotree (fun p => p = 2#1) tree.
-  Proof.
-    apply cotree_exists_right.
-    constructor; reflexivity.
-  Qed.
+  End tree_def.
   
-  Theorem contains_Q : forall q:Q, in_cotree (fun p => p = Qred q) tree.
-    intros q. 
-    destruct q as [num den].
-  Admitted.
+  Section enum_def.
+    
+    Definition enum : colist Q := cotree_bf tree.
+
+  End enum_def.
 
 End CalkinWilf.
 
