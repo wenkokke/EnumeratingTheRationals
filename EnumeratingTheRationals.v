@@ -133,31 +133,28 @@ Module CoList.
   
 End CoList.
 
-Notation colist                := CoList.colist.
-Notation cocons                := CoList.cocons.
+Notation colist := CoList.colist.
+Notation cocons := CoList.cocons.
+
+(**
 Notation colist_unfold         := CoList.unfold.
 Notation colist_take           := CoList.take.
-
-(** Various proofs on [colist]s. *)
-
 Notation colist_eq             := CoList.Eq.
 Notation colist_eq_refl        := CoList.Eq_refl.
 Notation colist_eq_sym         := CoList.Eq_sym.
 Notation colist_eq_trans       := CoList.Eq_trans.
-
 Notation colist_exists         := CoList.Exists.
 Notation colist_exists_here    := CoList.Exists_here.
 Notation colist_exists_further := CoList.Exists_further.
-
 Notation colist_forall         := CoList.Forall.
 Notation colist_forall_always  := CoList.Always.
-
 Notation in_colist             := CoList.In.
 Notation in_colist_at          := CoList.At.
 Notation colist_in_at          := CoList.In_At.
 Notation colist_at_exists      := CoList.At_Exists.
 Notation colist_exists_in      := CoList.Exists_In.
 Notation colist_in_exists      := CoList.In_Exists.
+**)
 
 (** ** CoTrees *)
 
@@ -491,53 +488,29 @@ Module CoTree.
       apply not_eq_sym; apply nil_cons.
     Defined.
 
+    Lemma In_path : forall {A} x (t: cotree A),
+      In x t -> exists p, x = lookup p t.
+    Proof.
+      intros A x t H.
+      induction H as [|t H IH|t H IH].
+      - exists Here; auto.
+      - elim IH; clear IH; intros p IH; exists (Left p); auto.
+      - elim IH; clear IH; intros p IH; exists (Right p); auto.
+    Qed.
+
     Theorem In_bf : forall {A} x (t: cotree A),
       In x t -> CoList.In x (bf t).
     Proof.
+      intros A x t H.
     Admitted.
 
   End bf_def.
     
 End CoTree.
 
-(** Import [CoTree] into the global scope. *)
-
-Notation cotree               := CoTree.cotree.
-Notation conode               := CoTree.conode.
-Notation cotree_unfold        := CoTree.unfold.
-Notation cotree_bf            := CoTree.bf.
-Notation cotree_map           := CoTree.map.
-Notation cotree_root          := CoTree.root.
-Notation cotree_left          := CoTree.left.
-Notation cotree_right         := CoTree.right.
-Notation cotree_lookup        := CoTree.lookup.
-Notation cotree_path          := CoTree.path.
-Notation cotree_here          := CoTree.Here.
-Notation cotree_goleft        := CoTree.Left.
-Notation cotree_goright       := CoTree.Right.
-Notation cotree_eq            := CoTree.Eq.
-Notation cotree_eq_refl       := CoTree.Eq_refl.
-Notation cotree_eq_sym        := CoTree.Eq_sym.
-Notation cotree_eq_trans      := CoTree.Eq_trans.
-Notation cotree_eq_root       := CoTree.Eq_root.
-Notation cotree_eq_left       := CoTree.Eq_left.
-Notation cotree_eq_right      := CoTree.Eq_right.
-Notation cotree_eq_coind      := CoTree.Eq_coind.
-Notation cotree_exists        := CoTree.Exists.
-Notation cotree_exists_in     := CoTree.Exists_In.
-Notation cotree_exists_here   := CoTree.Exists_here.
-Notation cotree_exists_left   := CoTree.Exists_left.
-Notation cotree_exists_right  := CoTree.Exists_right.
-Notation cotree_forall        := CoTree.Forall.
-Notation cotree_forall_always := CoTree.Always.
-Notation cotree_forall_here   := CoTree.Forall_here.
-Notation cotree_forall_left   := CoTree.Forall_left.
-Notation cotree_forall_right  := CoTree.Forall_right.
-Notation cotree_forall_map    := CoTree.Forall_map.
-Notation cotree_at            := CoTree.At.
-Notation in_cotree            := CoTree.In.
-Notation in_cotree_at         := CoTree.In_At.
-Notation in_cotree_exists     := CoTree.In_Exists.
+Notation cotree := CoTree.cotree.
+Notation conode := CoTree.conode.
+Notation path   := CoTree.path.
 
 (** ** The Stern-Brocot Tree *)
 Module SternBrocot.
@@ -553,7 +526,7 @@ Module SternBrocot.
                 | 0      => fun h => _
                 | Npos p => fun h => p
               end).
-      exfalso; apply h; reflexivity.
+      exfalso; auto.
     Defined.
   
     Definition N_Z (n:N) : Z :=
@@ -567,9 +540,9 @@ Module SternBrocot.
     Proof.
       intros n m H.
       destruct n as [|n].
-      - exfalso; apply H; reflexivity.
+      - exfalso; auto.
       - destruct m as [|m].
-        * simpl; assumption.
+        * simpl; discriminate.
         * simpl; discriminate.
     Qed.
   
@@ -614,7 +587,7 @@ Module SternBrocot.
     Defined.
 
     Definition tree : cotree Q.
-      refine (cotree_unfold next (qpair 0 1 1 0 _ _)).
+      refine (CoTree.unfold next (qpair 0 1 1 0 _ _)).
       - right ; discriminate.
       - left  ; discriminate.
     Defined.
@@ -623,7 +596,7 @@ Module SternBrocot.
 
   Section enum_def.
 
-    Definition enum : colist Q := cotree_bf tree.
+    Definition enum : colist Q := CoTree.bf tree.
 
   End enum_def.
 
@@ -633,7 +606,7 @@ Module SternBrocot.
 
     (** *** Computational Trace of a GCD Computation *)
 
-    Definition step (qs: cotree_path -> cotree_path) (acc: N*cotree_path) :=
+    Definition step (qs: path -> path) (acc: N*path) :=
       match acc with
         | (d,q0) => (d,qs q0)
       end.
@@ -657,9 +630,9 @@ Module SternBrocot.
 
     Function gcd_trace (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
-        if (m <? n) then step cotree_goleft (gcd_trace (m,(n - m))) else
-        if (n <? m) then step cotree_goright (gcd_trace ((m - n),n)) else
-        (m, cotree_here)
+        if (m <? n) then step CoTree.Left (gcd_trace (m,(n - m))) else
+        if (n <? m) then step CoTree.Right (gcd_trace ((m - n),n)) else
+        (m, CoTree.Here)
       end.
     Proof.
       intros p m n Hp Hltb; simpl.
@@ -670,10 +643,6 @@ Module SternBrocot.
   End gcd_trace_def.
   
 End SternBrocot.
-
-Notation stern_brocot_next := SternBrocot.next.
-Notation stern_brocot_tree := SternBrocot.tree.
-Notation stern_brocot_enum := SternBrocot.enum.
 
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.
@@ -687,19 +656,16 @@ Module CalkinWilf.
         | (m,n) => ((m,m + n),Zpos m # n,(m + n,n))
       end.
   
-    Definition tree : cotree Q := cotree_unfold next (1,1).
+    Definition tree : cotree Q := CoTree.unfold next (1,1).
 
   End tree_def.
   
   Section enum_def.
     
-    Definition enum : colist Q := cotree_bf tree.
+    Definition enum : colist Q := CoTree.bf tree.
 
   End enum_def.
 
 End CalkinWilf.
 
-Notation calkin_wilf_next := CalkinWilf.next.
-Notation calkin_wilf_tree := CalkinWilf.tree.
-Notation calkin_wilf_enum := CalkinWilf.enum.
 
