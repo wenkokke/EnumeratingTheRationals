@@ -641,15 +641,19 @@ Module SternBrocot.
     Definition pairsum (p: N*N) :=
       match p with (m,n) => N.to_nat (m + n) end.
 
-    Section Nnat_over_lt_def.
-      Lemma Nnat_over_lt : forall m n, (N.to_nat m < N.to_nat n)%nat -> (m < n)%N.
+    Section gcd_lemma_def.
+      
+      Local Open Scope nat_scope.
+      
+      Lemma gcd_lemma : forall m n, m < n -> (S m + (S n - S m)) < (S m + S n).
       Proof.
-        intros m n H.
+        intros m.
         induction m as [|m].
-        - induction n as [|n].
-          * apply lt_irrefl in H; inversion H.
-          * Admitted.
-    End Nnat_over_lt_def.
+        - intros n H; simpl; rewrite <- minus_n_O; apply lt_n_Sn.
+        - intros n H; simpl in *; apply lt_n_S.
+      Admitted.
+      
+    End gcd_lemma_def.
 
     Function gcd_trace (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
