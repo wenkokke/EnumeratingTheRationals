@@ -502,6 +502,7 @@ Module CoTree.
       In x t -> CoList.In x (bf t).
     Proof.
       intros A x t H.
+      apply In_path in H; elim H; clear H; intros p H.
     Admitted.
 
   End bf_def.
