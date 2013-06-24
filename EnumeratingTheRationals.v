@@ -618,27 +618,79 @@ Module SternBrocot.
     Section gcd_lemma_def.
       
       Local Open Scope nat_scope.
-      
-      Lemma gcd_lemma : forall m n, m < n -> (S m + (S n - S m)) < (S m + S n).
+
+      Lemma gcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
       Proof.
-        intros m.
-        induction m as [|m].
-        - intros n H; simpl; rewrite <- minus_n_O; apply lt_n_Sn.
-        - intros n H; simpl in *; apply lt_n_S.
+        destruct m,n; auto.
+        - intros H _; exfalso; apply H; reflexivity.
+        - intros _ H; exfalso; apply H; reflexivity.
+        - intros _ _ Hle; apply lt_S_n in Hle.
+          remember Hle as Hlt; clear HeqHlt; apply lt_S,lt_n_Sm_le in Hle.
+        rewrite <- (le_plus_minus (S m) (S n) (le_n_S m n Hle)).
+        rewrite <- plus_Snm_nSm; simpl.
+        apply le_lt_n_Sm,le_n_S,le_plus_r.
+      Qed.
+      Lemma gcd_lemma2 : forall m n, m<>0 -> n<>0 -> m<n -> (m - n + n) < (m + n).
+      Proof.
       Admitted.
+      Lemma gcd_lt_neq : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
+      Proof.
+        intros n H; destruct n as [|n]; [discriminate H| ].
+        simpl; apply not_eq_sym,lt_O_neq,Pos2Nat.is_pos.
+      Qed.
       
     End gcd_lemma_def.
 
     Function gcd_trace (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
-        if (m <? n) then step CoTree.Left (gcd_trace (m,(n - m))) else
-        if (n <? m) then step CoTree.Right (gcd_trace ((m - n),n)) else
+        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (gcd_trace (m,(n - m))) else
+        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (gcd_trace ((m - n),n)) else
         (m, CoTree.Here)
       end.
     Proof.
-      intros p m n Hp Hltb; simpl.
-      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt].
-      rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub.
+      intros p m n Hp H0.
+      apply andb_prop in H0; inversion H0 as [H1 Onb]; clear H0.
+      apply andb_prop in H1; inversion H1 as [Hltb Omb]; clear H1.
+      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt];
+      pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
+      pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
+      try inversion Hltb; try inversion Omb; try inversion Onb.
+
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma1.
+      (**) apply (gcd_lt_neq m Om).
+      (**) apply (gcd_lt_neq n On).
+      (**) destruct m as [|m], n as [|n].
+           (**) discriminate Hlt.
+           (**) discriminate Om.
+           (**) discriminate On.
+           (**) simpl; apply Pos2Nat.inj_lt; auto.
+
+      intros p m n Hp _ H0.
+      apply andb_prop in H0; inversion H0 as [H1 Onb]; clear H0.
+      apply andb_prop in H1; inversion H1 as [Hltb Omb]; clear H1.
+      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt];
+      pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
+      pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
+      try inversion Hltb; try inversion Omb; try inversion Onb.
+
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
+      (**) apply (gcd_lt_neq m Om).
+      (**) apply (gcd_lt_neq n On).
+      (**) destruct m as [|m], n as [|n].
+           (**) discriminate Hlt.
+           (**) discriminate Om.
+           (**) discriminate On.
+           (**) simpl; apply Pos2Nat.inj_lt; auto.
+
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
+      (**) apply (gcd_lt_neq m Om).
+      (**) apply (gcd_lt_neq n On).
+      (**) destruct m as [|m], n as [|n].
+           (**) discriminate On.
+           (**) discriminate Om.
+           (**) discriminate On.
+           (**) simpl; apply Pos2Nat.inj_lt.
+      
     Admitted.
 
   End gcd_trace_def.
