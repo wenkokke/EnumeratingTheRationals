@@ -630,8 +630,9 @@ Module SternBrocot.
         rewrite <- plus_Snm_nSm; simpl.
         apply le_lt_n_Sm,le_n_S,le_plus_r.
       Qed.
-      Lemma gcd_lemma2 : forall m n, m<>0 -> n<>0 -> m<n -> (m - n + n) < (m + n).
+      Lemma gcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
       Proof.
+        intros m n Om On.
       Admitted.
       Lemma gcd_lt_neq : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
       Proof.
@@ -672,25 +673,6 @@ Module SternBrocot.
       pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
       pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
       try inversion Hltb; try inversion Omb; try inversion Onb.
-
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
-      (**) apply (gcd_lt_neq m Om).
-      (**) apply (gcd_lt_neq n On).
-      (**) destruct m as [|m], n as [|n].
-           (**) discriminate Hlt.
-           (**) discriminate Om.
-           (**) discriminate On.
-           (**) simpl; apply Pos2Nat.inj_lt; auto.
-
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
-      (**) apply (gcd_lt_neq m Om).
-      (**) apply (gcd_lt_neq n On).
-      (**) destruct m as [|m], n as [|n].
-           (**) discriminate On.
-           (**) discriminate Om.
-           (**) discriminate On.
-           (**) simpl; apply Pos2Nat.inj_lt.
-      
     Admitted.
 
   End gcd_trace_def.
