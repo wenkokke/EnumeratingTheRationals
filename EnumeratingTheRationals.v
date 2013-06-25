@@ -618,22 +618,12 @@ Module SternBrocot.
     Section gcd_lemma_def.
       
       Local Open Scope nat_scope.
+      Require OrdersTac.
 
       Lemma gcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
-      Proof.
-        destruct m,n; auto.
-        - intros H _; exfalso; apply H; reflexivity.
-        - intros _ H; exfalso; apply H; reflexivity.
-        - intros _ _ Hle; apply lt_S_n in Hle.
-          remember Hle as Hlt; clear HeqHlt; apply lt_S,lt_n_Sm_le in Hle.
-        rewrite <- (le_plus_minus (S m) (S n) (le_n_S m n Hle)).
-        rewrite <- plus_Snm_nSm; simpl.
-        apply le_lt_n_Sm,le_n_S,le_plus_r.
-      Qed.
+      Proof. intros m n Om On Hlt; omega. Qed.
       Lemma gcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
-      Proof.
-        intros m n Om On.
-      Admitted.
+      Proof. intros m n Om On; omega. Qed.
       Lemma gcd_lt_neq : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
       Proof.
         intros n H; destruct n as [|n]; [discriminate H| ].
@@ -642,10 +632,10 @@ Module SternBrocot.
       
     End gcd_lemma_def.
 
-    Function gcd_trace (p: N*N) {measure pairsum p} :=
+    Function gcd_trace' (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
-        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (gcd_trace (m,(n - m))) else
-        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (gcd_trace ((m - n),n)) else
+        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (gcd_trace' (m,(n - m))) else
+        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (gcd_trace' ((m - n),n)) else
         (m, CoTree.Here)
       end.
     Proof.
@@ -673,7 +663,23 @@ Module SternBrocot.
       pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
       pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
       try inversion Hltb; try inversion Omb; try inversion Onb.
-    Admitted.
+
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
+      (**) apply (gcd_lt_neq m Om).
+      (**) apply (gcd_lt_neq n On).
+      (**) destruct m as [|m], n as [|n].
+           (**) discriminate On.
+           (**) discriminate Om.
+           (**) discriminate On.
+           (**) unfold pairsum. rewrite 2!N2Nat.inj_add, 1!N2Nat.inj_sub. apply gcd_lemma2.
+      (**) apply (gcd_lt_neq (N.pos m) Om).
+      (**) apply (gcd_lt_neq (N.pos n) On).
+    Defined.
+
+    Definition gcd_trace p :=
+      match gcd_trace' p with
+        | (_,p) => p
+      end.
 
   End gcd_trace_def.
   
