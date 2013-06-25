@@ -618,7 +618,6 @@ Module SternBrocot.
     Section gcd_lemma_def.
       
       Local Open Scope nat_scope.
-      Require OrdersTac.
 
       Lemma gcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
       Proof. intros m n Om On Hlt; omega. Qed.
