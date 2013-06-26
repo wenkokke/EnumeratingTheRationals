@@ -506,12 +506,64 @@ Module CoTree.
     Admitted.
 
   End bf_def.
-    
+
 End CoTree.
 
 Notation cotree := CoTree.cotree.
 Notation conode := CoTree.conode.
 Notation path   := CoTree.path.
+
+(** ** Naive Enumeration of Rationals *)
+Module Naive.
+  
+  Definition next (q: Q) : Q*Q*Q :=
+    (Z.succ (Qnum q) # Qden q, q, Qnum q # Pos.succ (Qden q)).
+
+  Definition tree := CoTree.unfold next (1 # 1).
+
+  Definition enum := CoTree.bf tree.
+
+  Fixpoint findn (n d: nat) : (n<>0)%nat -> (d<>0)%nat -> CoTree.path.
+    intros Hn Hd.
+    destruct n as [|n]; [exfalso; auto| ].
+    induction n as [|n IHn].
+    - destruct d as [|d]; [exfalso; auto| ].
+      induction d as [|d IHd].
+      * apply CoTree.Here.
+      * apply CoTree.Right,IHd; auto.
+    - apply CoTree.Left,IHn; auto.
+  Defined.
+
+  Definition findp (n d: positive) : CoTree.path.
+    apply (findn (Pos.to_nat n) (Pos.to_nat d)).
+    apply not_eq_sym,lt_0_neq,Pos2Nat.is_pos.
+    apply not_eq_sym,lt_0_neq,Pos2Nat.is_pos.
+  Defined.
+
+  Definition find (q: Q) : 0 < q -> CoTree.path.
+    intros Hq.
+    destruct q as [n d].
+    destruct n as [|n|n]; try discriminate Hq.
+    apply (findp n d).
+  Defined.
+  
+  Theorem all_Q_in_tree : forall q, 0 < q -> CoTree.In q tree.
+  Proof.
+    intros q Hq.
+    destruct q as [n' d'].
+    destruct n' as [|n'|n']; try discriminate Hq. clear Hq.
+    pose proof (Pos2Nat.is_pos n') as Hn; apply lt_0_neq,not_eq_sym in Hn.
+    pose proof (Pos2Nat.is_pos d') as Hd; apply lt_0_neq,not_eq_sym in Hd.
+    remember (Pos.to_nat n')   as n eqn:Heqn; replace (Pos.to_nat n') with n in Hn by apply Heqn.
+    remember (Pos.to_nat d')   as d eqn:Heqd; replace (Pos.to_nat d') with d in Hd by apply Heqd.
+    remember (findn n d Hn Hd) as p eqn:Heqp; apply (CoTree.At ('n' # d') tree p).
+    destruct n as [|n]; [exfalso; auto| ].
+    induction n as [|n IHn].
+    - destruct d as [|d]; [exfalso; auto| ].
+      induction d as [|d IHd].
+      * rewrite Heqp; simpl.
+  Admitted.
+End Naive.
 
 (** ** The Stern-Brocot Tree *)
 Module SternBrocot.
@@ -616,7 +668,6 @@ Module SternBrocot.
       match p with (m,n) => N.to_nat (m + n) end.
 
     Section gcd_lemma_def.
-      
       Local Open Scope nat_scope.
 
       Lemma gcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
@@ -628,7 +679,6 @@ Module SternBrocot.
         intros n H; destruct n as [|n]; [discriminate H| ].
         simpl; apply not_eq_sym,lt_O_neq,Pos2Nat.is_pos.
       Qed.
-      
     End gcd_lemma_def.
 
     Function gcd_trace' (p: N*N) {measure pairsum p} :=
@@ -675,12 +725,18 @@ Module SternBrocot.
       (**) apply (gcd_lt_neq (N.pos n) On).
     Defined.
 
-    Definition gcd_trace p :=
-      match gcd_trace' p with
-        | (_,p) => p
+    Definition gcd_trace (p: positive*positive) :=
+      match p with
+        | (n,d) =>
+          match gcd_trace' (N.pos n,N.pos d) with
+            | (_,p) => p
+          end
       end.
-
   End gcd_trace_def.
+  
+  Theorem correctness : forall (n:positive) (d:positive), CoTree.lookup (gcd_trace (n,d)) tree = (Z.pos n # d).
+  Proof.
+  Admitted.
   
 End SternBrocot.
 
