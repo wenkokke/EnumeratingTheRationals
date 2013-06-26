@@ -24,9 +24,8 @@
 
     step : Q*Q -> (Q*Q)*Q*(Q*Q)
     step (a/b, c/d) =
-      ( (a/b, (a+c) / (b+d))
-      , (a+c) / (b+d)
-      ,((a+c) / (b+d), c/d))
+      ((a/b, (a+c)/(b+d)), (a+c)/(b+d), ((a+c)/(b+d), c/d))
+    
     tree : cotree Q
     tree = unfold step (0/1,1/0)
     
@@ -38,12 +37,14 @@
   
 ## Problems with Stern-Brocot Tree
 
-> - Unfolding requires the "pseudo-rationals" $0/1$ and $1/0$ as input.
-> - 
+> - Unfolding requires the "pseudo-rationals" $0/1$ and $1/0$ as input;
 
 % Proving relation between $Q$ reduction and position in the tree
 % requires both algorithms to be based on the same implementation
 % of `gcd`--but standard implementation does not provide a trace.
+
+> - Relation between $Q$-reduction and path in the Stern-Brocot tree
+    requires both to use equivalent implementations of `gcd`;
   
 ## Conclusion
     
