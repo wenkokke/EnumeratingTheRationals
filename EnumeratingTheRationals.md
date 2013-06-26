@@ -20,7 +20,7 @@
     step n/d = (n+1/d, n/d, n/d+1)
     
     tree : cotree Q
-    tree = unfold step (1/1)
+    tree = unfold step 1/1
   
 ## Stern-Brocot Tree
 
@@ -29,7 +29,7 @@
       ((a/b, (a+c)/(b+d)), (a+c)/(b+d), ((a+c)/(b+d), c/d))
     
     tree : cotree Q
-    tree = unfold step (0/1,1/0)
+    tree = unfold step (0/1, 1/0)
     
 ## Stern-Brocot Tree (cont'd)
 
@@ -53,6 +53,8 @@
     requires both to use equivalent implementations of `gcd`;
   
 ## Conclusion
+
+  
     
 ## Calkin-Wilf Tree
 
