@@ -39,7 +39,7 @@
     
  -  tree : CoTree Q
     
-    tree = unfold step 1/1
+    tree = unfold step $\frac{1}{1}$
   
 ## Reduced rationals
         gcd : Q -> N
@@ -100,7 +100,7 @@
     
 ## Problems with Stern-Brocot Tree
 
- - Unfolding requires the "pseudo-rationals" $0/1$ and $1/0$ as input;
+> - Unfolding requires the "pseudo-rationals" $\frac{0}{1}$ and $\frac{1}{0}$ as input;
 
 <!--
   Proving relation between $Q$ reduction and position in the tree
@@ -108,8 +108,8 @@
   of `gcd`--but standard implementation does not provide a trace.
   -->
 
- - Relation between $Q$-reduction and path in the Stern-Brocot tree
-   requires both to use equivalent implementations of `gcd`
+> - Relation between $Q$-reduction and path in the Stern-Brocot tree
+    requires both to use equivalent implementations of `gcd`
   
 ## Conclusions
   
