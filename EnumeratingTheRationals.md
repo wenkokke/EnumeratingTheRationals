@@ -51,8 +51,8 @@
  
         igcd : Q -> (N, [Bool])
         igcd p/q =
-          if m < n then step True  $ igcd m/(m - n) else
-          if m > n them step False $ igcd (m - n)/n else m
+          if m < n then step True  $ igcd (m, m - n) else
+          if m > n them step False $ igcd (m - n, n) else m
              where step b (d, bs) = (d, b : bs)
     
  - pgcd : Q -> [Bool]
