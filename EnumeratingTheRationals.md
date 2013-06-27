@@ -55,9 +55,9 @@
           if m > n them step False $ igcd (m - n, n) else m
              where step b (d, bs) = (d, b : bs)
     
- - pgcd : Q -> [Bool]
+ - pgcd : Q $\to$ [Bool]
         
- - ungcd : (N, [Bool]) -> Q
+ - ungcd : (N, [Bool]) $\to$ Q
         
 ## Reduced rationals (Cont'd)
 
@@ -76,7 +76,7 @@
 ## Stern-Brocot Tree (Cont'd)
 ![](stern_brocot.png)
 
- -  step : (Q, Q) -> ( (Q, Q), Q, (Q, Q) )
+ -  step : (Q, Q) $\to$ ( (Q, Q), Q, (Q, Q) )
  
     step ($\frac{a}{b}$, $\frac{c}{d}$) = 
         let m = $\frac{a+c}{b+d}$ 
@@ -117,7 +117,7 @@
 ## Calkin-Wilf Tree
 ![](calkin_wilf.png)
 
- -  step : Q -> (Q, Q, Q)
+ -  step : Q $\to$ (Q, Q, Q)
    
     step $\frac{m}{n}$ = ($\frac{m}{m+n}$, $\frac{m}{n}$, $\frac{m+n}{n}$)
     
