@@ -10,11 +10,6 @@
 - Calkin-Wilf Tree
 - Deforested Calkin-Wilf
  
-## 
-
-
-  
-  
 ## CoLists and CoTrees
 
  - CoData
