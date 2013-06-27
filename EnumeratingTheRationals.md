@@ -111,8 +111,7 @@
  - Relation between $Q$-reduction and path in the Stern-Brocot tree
    requires both to use equivalent implementations of `gcd`
   
-## Conclusion
- - Stuff's hard!
+## Conclusions
   
     
 ## Calkin-Wilf Tree
