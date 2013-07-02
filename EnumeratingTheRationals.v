@@ -136,26 +136,6 @@ End CoList.
 Notation colist := CoList.colist.
 Notation cocons := CoList.cocons.
 
-(**
-Notation colist_unfold         := CoList.unfold.
-Notation colist_take           := CoList.take.
-Notation colist_eq             := CoList.Eq.
-Notation colist_eq_refl        := CoList.Eq_refl.
-Notation colist_eq_sym         := CoList.Eq_sym.
-Notation colist_eq_trans       := CoList.Eq_trans.
-Notation colist_exists         := CoList.Exists.
-Notation colist_exists_here    := CoList.Exists_here.
-Notation colist_exists_further := CoList.Exists_further.
-Notation colist_forall         := CoList.Forall.
-Notation colist_forall_always  := CoList.Always.
-Notation in_colist             := CoList.In.
-Notation in_colist_at          := CoList.At.
-Notation colist_in_at          := CoList.In_At.
-Notation colist_at_exists      := CoList.At_Exists.
-Notation colist_exists_in      := CoList.Exists_In.
-Notation colist_in_exists      := CoList.In_Exists.
-**)
-
 (** ** CoTrees *)
 
 Module CoTree.
