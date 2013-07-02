@@ -633,7 +633,7 @@ Module SternBrocot.
 
   End enum_def.
 
-  Section gcd_trace_def.
+  Section pgcd_def.
 
     Local Open Scope N_scope. 
 
@@ -647,24 +647,25 @@ Module SternBrocot.
     Definition pairsum (p: N*N) :=
       match p with (m,n) => N.to_nat (m + n) end.
 
-    Section gcd_lemma_def.
+    Section pgcd_lemma.
       Local Open Scope nat_scope.
 
-      Lemma gcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
+      Lemma pgcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
       Proof. intros m n Om On Hlt; omega. Qed.
-      Lemma gcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
+      Lemma pgcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
       Proof. intros m n Om On; omega. Qed.
-      Lemma gcd_lt_neq : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
+      Lemma pgcd_lemma3 : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
       Proof.
         intros n H; destruct n as [|n]; [discriminate H| ].
         simpl; apply not_eq_sym,lt_O_neq,Pos2Nat.is_pos.
       Qed.
-    End gcd_lemma_def.
 
-    Function gcd_trace' (p: N*N) {measure pairsum p} :=
+    End pgcd_lemma.
+
+    Function pgcd' (p: N*N) {measure pairsum p} :=
       match p with (m,n) => 
-        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (gcd_trace' (m,(n - m))) else
-        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (gcd_trace' ((m - n),n)) else
+        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (pgcd' (m,(n - m))) else
+        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (pgcd' ((m - n),n)) else
         (m, CoTree.Here)
       end.
     Proof.
@@ -676,9 +677,9 @@ Module SternBrocot.
       pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
       try inversion Hltb; try inversion Omb; try inversion Onb.
 
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma1.
-      (**) apply (gcd_lt_neq m Om).
-      (**) apply (gcd_lt_neq n On).
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply pgcd_lemma1.
+      (**) apply (pgcd_lemma3 m Om).
+      (**) apply (pgcd_lemma3 n On).
       (**) destruct m as [|m], n as [|n].
            (**) discriminate Hlt.
            (**) discriminate Om.
@@ -693,90 +694,27 @@ Module SternBrocot.
       pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
       try inversion Hltb; try inversion Omb; try inversion Onb.
 
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply gcd_lemma2.
-      (**) apply (gcd_lt_neq m Om).
-      (**) apply (gcd_lt_neq n On).
+      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply pgcd_lemma2.
+      (**) apply (pgcd_lemma3 m Om).
+      (**) apply (pgcd_lemma3 n On).
       (**) destruct m as [|m], n as [|n].
            (**) discriminate On.
            (**) discriminate Om.
            (**) discriminate On.
-           (**) unfold pairsum. rewrite 2!N2Nat.inj_add, 1!N2Nat.inj_sub. apply gcd_lemma2.
-      (**) apply (gcd_lt_neq (N.pos m) Om).
-      (**) apply (gcd_lt_neq (N.pos n) On).
+           (**) unfold pairsum. rewrite 2!N2Nat.inj_add, 1!N2Nat.inj_sub. apply pgcd_lemma2.
+      (**) apply (pgcd_lemma3 (N.pos m) Om).
+      (**) apply (pgcd_lemma3 (N.pos n) On).
     Defined.
 
-    Definition gcd_trace (p: positive*positive) :=
+    Definition pgcd (p: positive*positive) :=
       match p with
         | (n,d) =>
-          match gcd_trace' (N.pos n,N.pos d) with
+          match pgcd' (N.pos n,N.pos d) with
             | (_,p) => p
           end
       end.
-  End gcd_trace_def.
-  
-  Section gcd_trace_def_new.
-  
-    Notation "p ~ 1" := (xI p)
-    (at level 7, left associativity, format "p '~' '1'") : positive_scope.
-    Notation "p ~ 0" := (xO p)
-    (at level 7, left associativity, format "p '~' '0'") : positive_scope.
-
-    Local Open Scope positive_scope.
-    Fixpoint succ x :=
-      match x with
-        | p~1 => (succ p)~0
-        | p~0 => p~1
-        | 1 => 1~0
-      end.
-
-
-    Fixpoint size_nat p : nat :=
-      match p with
-        | 1 => S O
-        | p~1 => S (size_nat p)
-        | p~0 => S (size_nat p)
-      end.
-
-    Fixpoint iggcdn (n : nat) (a b : positive) : ((positive*path)*(positive*positive)) :=
-      match n with
-        | O => ((1, CoTree.Here),(a,b))
-        | S n =>
-          match a,b with
-      | 1   , _    => ((1, CoTree.Here), (1, b))
-      | _   , 1    => ((1, CoTree.Here), (a, 1))
-      | a~0 , b~0  => let '((g,w), p      ) := iggcdn n a b in ((g~0, CoTree.Right w), p         )
-      | _   , b~0  => let '((g,w), (aa,bb)) := iggcdn n a b in ((g,   CoTree.Right w), (aa, bb~0))
-      | a~0 , _    => let '((g,w), (aa,bb)) := iggcdn n a b in ((g,   CoTree.Left (CoTree.Left w)), (aa~0, bb))
-      | a'~1, b'~1 =>
-              match a' ?= b' with
-          | Eq => ((a, CoTree.Here), (1,1))
-          | Lt => let '((g,w), (ba,aa)) := iggcdn n (b' - a') a in ((g, CoTree.Left (CoTree.Left w)), (aa       , aa + ba~0))
-          | Gt => let '((g,w), (ab,bb)) := iggcdn n (a' - b') b in ((g, CoTree.Right w), (bb + ab~0, bb       ))
-        end
-          end
-      end.
-
-    Definition iggcd (p: positive*positive) := 
-      match p with
-      | (a, b) => iggcdn (size_nat a + size_nat b)%nat a b
-      end.
-
-
-    Definition igcd (p : positive*positive) : positive*path :=
-      match iggcd p with
-      | (id, _) => id
-      end.
-
-    Definition gcd_trace_new (p : positive*positive) : path :=
-      match igcd p with
-      | (d, p) => p
-      end.
-  End gcd_trace_def_new.
-
-  Theorem correctness : forall (n:positive) (d:positive), CoTree.lookup (gcd_trace (n,d)) tree = (Z.pos n # d).
-  Proof.
-  Admitted.
-  
+  End pgcd_def.
+    
 End SternBrocot.
 
 (** ** The Calkin-Wilf Tree *)
