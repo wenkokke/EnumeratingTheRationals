@@ -633,87 +633,91 @@ Module SternBrocot.
 
   End enum_def.
 
-  Section pgcd_def.
+  Section gcd_def.
 
-    Local Open Scope N_scope. 
+    Local Open Scope positive_scope.
 
     (** *** Computational Trace of a GCD Computation *)
 
-    Definition step (qs: path -> path) (acc: N*path) :=
+    Definition step (qs: path -> path) (acc: positive*path) :=
       match acc with
         | (d,q0) => (d,qs q0)
       end.
 
-    Definition pairsum (p: N*N) :=
-      match p with (m,n) => N.to_nat (m + n) end.
+    Definition pairsum (p: positive*positive) :=
+      match p with
+        | (m,n) => Pos.to_nat (m + n)
+      end.
 
-    Section pgcd_lemma.
+    Section igcd_lemma.
       Local Open Scope nat_scope.
 
-      Lemma pgcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
+      Lemma igcd_lemma1 : forall m n, m<>0 -> n<>0 -> m<n -> (m + (n - m)) < (m + n).
       Proof. intros m n Om On Hlt; omega. Qed.
-      Lemma pgcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
+      Lemma igcd_lemma2 : forall m n, m<>0 -> n<>0 -> (m - n + n) < (m + n).
       Proof. intros m n Om On; omega. Qed.
-      Lemma pgcd_lemma3 : forall n:N, (0 < n)%N -> (N.to_nat n <> 0)%nat.
+      Lemma igcd_lemma3 : forall n, Pos.to_nat n <> 0.
       Proof.
-        intros n H; destruct n as [|n]; [discriminate H| ].
+        intro n; pose proof (Pos2Nat.is_pos n) as H.
         simpl; apply not_eq_sym,lt_O_neq,Pos2Nat.is_pos.
       Qed.
 
-    End pgcd_lemma.
+    End igcd_lemma.
 
-    Function pgcd' (p: N*N) {measure pairsum p} :=
+    Function igcd (p: positive*positive) {measure pairsum p} :=
       match p with (m,n) => 
-        if ((m <? n) && (0 <? m) && (0 <? n)) then step CoTree.Left  (pgcd' (m,(n - m))) else
-        if ((n <? m) && (0 <? m) && (0 <? n)) then step CoTree.Right (pgcd' ((m - n),n)) else
+        if (m <? n) then step CoTree.Left  (igcd (m,(n - m))) else
+        if (n <? m) then step CoTree.Right (igcd ((m - n),n)) else
         (m, CoTree.Here)
       end.
     Proof.
-      intros p m n Hp H0.
-      apply andb_prop in H0; inversion H0 as [H1 Onb]; clear H0.
-      apply andb_prop in H1; inversion H1 as [Hltb Omb]; clear H1.
-      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt];
-      pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
-      pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
-      try inversion Hltb; try inversion Omb; try inversion Onb.
+      intros p m n Hp Hltb.
+      pose proof (Pos.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt].
+      pose proof (Pos2Nat.is_pos m) as Om.
+      pose proof (Pos2Nat.is_pos n) as On.
+      simpl; rewrite 2!Pos2Nat.inj_add, 1!Pos2Nat.inj_sub. apply igcd_lemma1.
+      (**) apply igcd_lemma3.
+      (**) apply igcd_lemma3.
+      (**) apply Pos2Nat.inj_lt; auto.
+      (**) auto.
+      simpl. rewrite 2!Pos2Nat.inj_add, 1!Pos2Nat.inj_sub. apply igcd_lemma1.
+      (**) apply igcd_lemma3.
+      (**) apply igcd_lemma3.
+      (**) apply Pos2Nat.inj_lt; auto.
+      (**) inversion Hltb.
+      (**) inversion Hltb.
 
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply pgcd_lemma1.
-      (**) apply (pgcd_lemma3 m Om).
-      (**) apply (pgcd_lemma3 n On).
-      (**) destruct m as [|m], n as [|n].
-           (**) discriminate Hlt.
-           (**) discriminate Om.
-           (**) discriminate On.
-           (**) simpl; apply Pos2Nat.inj_lt; auto.
-
-      intros p m n Hp _ H0.
-      apply andb_prop in H0; inversion H0 as [H1 Onb]; clear H0.
-      apply andb_prop in H1; inversion H1 as [Hltb Omb]; clear H1.
-      pose proof (N.ltb_spec m n) as Hlt; destruct Hlt as [Hlt|Hlt];
-      pose proof (N.ltb_spec 0 n) as On; destruct On as [On|On];
-      pose proof (N.ltb_spec 0 m) as Om; destruct Om as [Om|Om];
-      try inversion Hltb; try inversion Omb; try inversion Onb.
-
-      simpl; rewrite 2!N2Nat.inj_add; rewrite 1!N2Nat.inj_sub; apply pgcd_lemma2.
-      (**) apply (pgcd_lemma3 m Om).
-      (**) apply (pgcd_lemma3 n On).
-      (**) destruct m as [|m], n as [|n].
-           (**) discriminate On.
-           (**) discriminate Om.
-           (**) discriminate On.
-           (**) unfold pairsum. rewrite 2!N2Nat.inj_add, 1!N2Nat.inj_sub. apply pgcd_lemma2.
-      (**) apply (pgcd_lemma3 (N.pos m) Om).
-      (**) apply (pgcd_lemma3 (N.pos n) On).
+      intros p m n Hp _ Hltb.
+      pose proof (Pos.ltb_spec n m) as Hlt; destruct Hlt as [Hlt|Hlt].
+      simpl; rewrite 2!Pos2Nat.inj_add; rewrite 1!Pos2Nat.inj_sub. apply igcd_lemma2.
+      (**) apply igcd_lemma3.
+      (**) apply igcd_lemma3.
+      (**) auto.
+      simpl; rewrite 2!Pos2Nat.inj_add; rewrite 1!Pos2Nat.inj_sub. apply igcd_lemma2.
+      (**) apply igcd_lemma3.
+      (**) apply igcd_lemma3.
+      (**) inversion Hltb.
     Defined.
 
-    Definition pgcd (p: positive*positive) :=
-      match p with
-        | (n,d) =>
-          match pgcd' (N.pos n,N.pos d) with
-            | (_,p) => p
-          end
+    Definition gcd (n d: positive) :=
+      match igcd (n,d) with
+        | (g,_) => g
       end.
-  End pgcd_def.
+
+    Definition pgcd (n d: positive) :=
+      match igcd (n,d) with
+        | (_,p) => p
+      end.
+
+    Theorem gcd_divide_l : forall x y, (gcd x y | x).
+    Admitted.
+    Theorem gcd_divide_r : forall x y, (gcd x y | y).
+    Admitted.
+
+    Definition qred (n d: positive) : Q.
+    Admitted.
+      
+  End gcd_def.
     
 End SternBrocot.
 
