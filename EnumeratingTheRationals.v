@@ -7,6 +7,20 @@ Require Import NArith.
 Require Import QArith.
 Require Import Recdef.
 
+(** ** Lists *)
+
+Module List.
+  
+  Definition hd {A} (xs: list A) : nil<>xs -> A.
+    refine(match xs as ys return nil<>ys -> A with
+             | nil      => fun h => _
+             | cons x _ => fun h => x
+           end).
+    exfalso; apply h; reflexivity.
+  Defined.
+
+End List.
+
 (** ** CoLists *)
 
 Module CoList.
@@ -17,6 +31,8 @@ Module CoList.
 
   Notation colist         := Stream.
   Notation cocons         := Cons.
+  Notation hd             := hd.
+  Notation tl             := tl.
   Notation Eq             := EqSt.
   Notation Eq_refl        := EqSt_reflex.
   Notation Eq_sym         := sym_EqSt.
@@ -402,13 +418,16 @@ Module CoTree.
     - apply Forall_right in F; apply ForallP_NotExistsNotP in F; elim F. assumption.
   Qed.
 
-  Theorem In_Forall : forall {A} (P: A -> Prop) t,
-    (forall x t, In x t -> P x) -> Forall (fun t => P (root t)) t.
+  Theorem In_Forall : forall {A} (P: A -> Prop) (t: cotree A),
+    (forall x, In x t -> P x) -> Forall (fun t => P (root t)) t.
   Proof.
+    cofix.
     intros A P t H.
     constructor.
-    - apply (H (root t) t). apply In_root. reflexivity.
-  Admitted.
+    - apply H. apply In_root. auto.
+    - apply In_Forall. intros x HI. apply H. apply In_left. auto.
+    - apply In_Forall. intros x HI. apply H. apply In_right. auto.
+  Qed.
       
   Theorem Forall_In : forall {A} P (t: cotree A),
     Forall (fun t => P (root t)) t -> forall x, In x t -> P x.
@@ -449,8 +468,8 @@ Module CoTree.
     (** Performs a breadth-first walk over a forest of [cotree]s, provided that
         the forest is provably non-empty. *)
   
-    CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : ts<>nil -> colist A.
-      refine (match ts as xs return xs<>nil -> colist A with
+    CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : nil<>ts -> colist A.
+      refine (match ts as xs return nil<>xs -> colist A with
                 | nil       => fun h => _
                 | cons t ts => fun h =>
                   match t with
@@ -458,15 +477,22 @@ Module CoTree.
                   end
               end).
       exfalso; apply h; reflexivity.
-      apply not_eq_sym; apply app_cons_not_nil.
+      apply app_cons_not_nil.
     Defined.
 
     (** Performs a breadth-first walk over a [cotree], returning a [colist]. *)
     
     Definition bf {A: Type} (t: cotree A) : colist A.
       refine (bf_acc (t :: nil) _).
-      apply not_eq_sym; apply nil_cons.
+      apply nil_cons.
     Defined.
+
+    Lemma bf_acc_hd {A} (ts: list (cotree A)) (H: nil<>ts) : CoList.hd (bf_acc ts H) = root (List.hd ts H).
+    Proof.
+      destruct ts as [|t ts].
+      - exfalso; apply H; reflexivity.
+      - destruct t; reflexivity.
+    Qed.
 
     Lemma In_path : forall {A} x (t: cotree A),
       In x t -> exists p, x = lookup p t.
@@ -478,11 +504,22 @@ Module CoTree.
       - elim IH; clear IH; intros p IH; exists (Right p); auto.
     Qed.
 
+    Lemma In_parent : forall {A} x (l: cotree A),
+      forall y r, CoList.In x (bf l) -> CoList.In x (bf (conode A l y r)).
+    Proof.
+      intros A x l y r H.
+      apply CoList.In_further.
+    Admitted.
+
     Theorem In_bf : forall {A} x (t: cotree A),
       In x t -> CoList.In x (bf t).
     Proof.
       intros A x t H.
-      apply In_path in H; elim H; clear H; intros p H.
+      induction H as [|t H IH|t H IH].
+      - destruct t; apply CoList.In_here; auto.
+      - destruct t as [l y r].
+        apply CoList.In_further.
+        simpl in H,IH.
     Admitted.
 
   End bf_def.
@@ -495,30 +532,54 @@ Notation path   := CoTree.path.
 
 (** ** Naive Enumeration of Rationals *)
 Module Naive.
-  
-  Definition next (q: Q) : Q*Q*Q :=
-    (Z.succ (Qnum q) # Qden q, q, Qnum q # Pos.succ (Qden q)).
 
-  Definition tree := CoTree.unfold next (1 # 1).
+  Definition next (p: positive*positive) : (positive*positive)*Q*(positive*positive) :=
+    match p with (n,d) => ((Pos.succ n, d), Z.pos n # d, (n, Pos.succ d)) end.
+
+  Definition tree := CoTree.unfold next (1,1)%positive.
 
   Definition enum := CoTree.bf tree.
 
-  Fixpoint findn (n d: nat) : (n<>0)%nat -> (d<>0)%nat -> CoTree.path.
-    intros Hn Hd.
-    destruct n as [|n]; [exfalso; auto| ].
-    induction n as [|n IHn].
-    - destruct d as [|d]; [exfalso; auto| ].
-      induction d as [|d IHd].
-      * apply CoTree.Here.
-      * apply CoTree.Right,IHd; auto.
-    - apply CoTree.Left,IHn; auto.
-  Defined.
+  Definition findp (n d: positive) : path :=
+    Pos.peano_rec
+      (*Type*) (fun _ => path)
+      (*Zero*) (Pos.peano_rec
+               (*Type*) (fun _ => path)
+               (*Zero*) (CoTree.Here)
+               (*Succ*) (fun _ p => CoTree.Right p)
+               (*Args*) d
+               )
+      (*Succ*) (fun _ p => CoTree.Left p)
+      (*Args*) n.
 
-  Definition findp (n d: positive) : CoTree.path.
-    apply (findn (Pos.to_nat n) (Pos.to_nat d)).
-    apply not_eq_sym,lt_0_neq,Pos2Nat.is_pos.
-    apply not_eq_sym,lt_0_neq,Pos2Nat.is_pos.
-  Defined.
+  Lemma findp_l (n d: positive) : findp (Pos.succ n) d = CoTree.Left (findp n d).
+  Proof.
+    unfold findp,Pos.peano_rec.
+    rewrite Pos.peano_rect_succ.
+    reflexivity.
+  Qed.
+
+  Lemma findp_r (d: positive) : findp 1 (Pos.succ d) = CoTree.Right (findp 1 d).
+  Proof.
+    unfold findp,Pos.peano_rec.
+    rewrite Pos.peano_rect_succ.
+    reflexivity.
+  Qed.
+
+  (* We have to somehow prove a duality between [next] and [findp],
+     where in [next] if [n] increases we consume a [Left] path, if [d]
+     increases we consume a [Right] path, and in [findp] we generate
+     a [Left] path as long as we can consume successors of [n], and 
+     [Right] paths as long as we can consume successors of [d]. *)
+
+  Lemma findp_correct (n d: positive) : CoTree.lookup (findp n d) tree = 'n # d.
+  Proof.
+    unfold tree.
+    induction n as [|n] using Pos.peano_ind.
+    - induction d as [|d] using Pos.peano_ind.
+      * reflexivity.
+      * rewrite findp_r.
+  Admitted.
 
   Definition find (q: Q) : 0 < q -> CoTree.path.
     intros Hq.
@@ -527,22 +588,14 @@ Module Naive.
     apply (findp n d).
   Defined.
   
-  Theorem all_Q_in_tree : forall q, 0 < q -> CoTree.In q tree.
+  Theorem find_correct (q: Q) (H: 0 < q) : CoTree.lookup (find q H) tree = q.
   Proof.
-    intros q Hq.
-    destruct q as [n' d'].
-    destruct n' as [|n'|n']; try discriminate Hq. clear Hq.
-    pose proof (Pos2Nat.is_pos n') as Hn; apply lt_0_neq,not_eq_sym in Hn.
-    pose proof (Pos2Nat.is_pos d') as Hd; apply lt_0_neq,not_eq_sym in Hd.
-    remember (Pos.to_nat n')   as n eqn:Heqn; replace (Pos.to_nat n') with n in Hn by apply Heqn.
-    remember (Pos.to_nat d')   as d eqn:Heqd; replace (Pos.to_nat d') with d in Hd by apply Heqd.
-    remember (findn n d Hn Hd) as p eqn:Heqp; apply (CoTree.At ('n' # d') tree p).
-    destruct n as [|n]; [exfalso; auto| ].
-    induction n as [|n IHn].
-    - destruct d as [|d]; [exfalso; auto| ].
-      induction d as [|d IHd].
-      * rewrite Heqp; simpl.
-  Admitted.
+    case q as [n d].
+    case n as [|n|n].
+    - inversion H.
+    - unfold find; apply findp_correct.
+    - inversion H.
+  Qed.
 End Naive.
 
 (** ** The Stern-Brocot Tree *)
