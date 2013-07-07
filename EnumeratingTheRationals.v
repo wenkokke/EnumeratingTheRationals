@@ -699,21 +699,15 @@ Module SternBrocot.
       (**) inversion Hltb.
     Defined.
 
-    Definition gcd (n d: positive) :=
-      match igcd (n,d) with
-        | (g,_) => g
-      end.
+    Definition gcd (x y: positive) := fst (igcd (x,y)).
+    Definition pgcd (x y: positive) := snd (igcd (x,y)).
 
-    Definition pgcd (n d: positive) :=
-      match igcd (n,d) with
-        | (_,p) => p
-      end.
-
+    Theorem gcd_equiv : forall x y, Pos.gcd x y = gcd x y.
+    Admitted.
     Theorem gcd_divide_l : forall x y, (gcd x y | x).
     Admitted.
     Theorem gcd_divide_r : forall x y, (gcd x y | y).
     Admitted.
-
     Definition qred (n d: positive) : Q.
     Admitted.
       
