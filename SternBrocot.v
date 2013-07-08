@@ -7,10 +7,16 @@ Require Import QArith.
 Require Import Recdef.
 (* end hide *)
 
-(** ** The Stern-Brocot Tree *)
+(** ** Enumerating The Rationals: The Stern-Brocot Tree *)
+
 Module SternBrocot.
 
-  (** *** Required Proofs on Natural Numbers *)
+  (** *** Additional Proofs on Natural Numbers *)
+  (** In order to construct the Stern-Brocot tree, we required
+      some simple lemmas on the natural numbers [N]. We use these
+      lemmas to guarantee that [next] never generates a rational
+      number with [0] as a denumerator. See below.
+    *)
 
   Section N_properties.
 
@@ -56,10 +62,18 @@ Module SternBrocot.
   End N_properties.
 
   (** *** Construction of the Tree *)
-
+  
   Section tree_def.
 
     Local Open Scope N_scope.
+    
+    (** The main issue with constructing the Stern-Brocot tree is that the [next]
+        function passes along "pseudo"-rationals, such as [1/0] and [0/1]. In order
+        to safely be able to construct rationals using these pseudo-rationals, we
+        pass along proofs of the fact that the denumerator can never be zero.
+      
+        We call these pairs of pseudo-rationals [Qpair]s.
+      *)
 
     Inductive Qpair : Type :=
     | qpair (a b c d : N) (HL: a<>0 \/ c<>0) (HR: b<>0 \/ d<>0) : Qpair.
@@ -89,17 +103,11 @@ Module SternBrocot.
     
   End tree_def.
 
-  Section enum_def.
-
-    Definition enum : colist Q := CoTree.bf tree.
-
-  End enum_def.
+  Definition enum : colist Q := CoTree.bf tree.
 
   Section gcd_def.
 
     Local Open Scope positive_scope.
-
-    (** *** Computational Trace of a GCD Computation *)
 
     Definition step (qs: path -> path) (acc: positive*path) :=
       match acc with

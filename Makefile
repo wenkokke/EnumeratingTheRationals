@@ -1,39 +1,23 @@
 
-all : CoList.vo CoTree.vo Naive.vo SternBrocot.vo CalkinWilf.vo
+all: CoList.vo CoTree.vo Naive.vo SternBrocot.vo CalkinWilf.vo
 
-doc : CoList.html CoTree.html Naive.html SternBrocot.html CalkinWilf.html
+doc:
+	coqdoc -s CoList.v CoTree.v Naive.v SternBrocot.v CalkinWilf.v
 
-clean :
+clean:
 	@rm -f *.vo *.glob *.html coqdoc.css
-	
 
-CoList.vo :
-	coqc CoList.v
-	
-CoTree.vo : CoList.vo
+CoList.vo:
+	coqc -I . CoList.v
+
+CoTree.vo: CoList.vo
 	coqc -I . CoTree.v
 	
-Naive.vo : CoTree.vo
+Naive.vo: CoList.vo CoTree.vo
 	coqc -I . Naive.v
 	
-SternBrocot.vo : CoTree.vo
+SternBrocot.vo: CoList.vo CoTree.vo
 	coqc -I . SternBrocot.v
 	
-CalkinWilf.vo : CoTree.vo
+CalkinWilf.vo: CoList.vo CoTree.vo
 	coqc -I . CalkinWilf.v
-	
-CoList.html :
-	coqdoc -s CoList.v
-	
-CoTree.html :
-	coqdoc -s CoTree.v
-	
-Naive.html :
-	coqdoc -s Naive.v
-	
-SternBrocot.html :
-	coqdoc -s SternBrocot.v
-	
-CalkinWilf.html :
-	coqdoc -s CalkinWilf.v
-	
