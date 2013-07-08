@@ -15,6 +15,7 @@ Module CoList.
   Notation cocons         := Cons.
   Notation hd             := hd.
   Notation tl             := tl.
+  Notation map            := map.
   Notation Eq             := EqSt.
   Notation Eq_refl        := EqSt_reflex.
   Notation Eq_sym         := sym_EqSt.
@@ -24,6 +25,7 @@ Module CoList.
   Notation Exists_further := Further.
   Notation Forall         := ForAll.
   Notation Always         := HereAndFurther.
+  Notation Forall_coind   := ForAll_coind.
   Notation lookup         := Str_nth.
 
   (** Ensure that [lookup] is transparent. *)
@@ -36,7 +38,7 @@ Module CoList.
     match f e with
       | (x,xs) => cocons  x (unfold f xs)
     end.
-  
+    
   (** Takes a finite prefix of an infinite [colist]. *)
 
   Fixpoint take {A: Type} (n: nat) (xs: colist A) : list A :=
@@ -129,6 +131,41 @@ Module CoList.
       apply Forall_further in Hall; apply IHn in Hall; assumption.    
   Qed.
   
+  (** Concatinates an infinite list of finite lists. *)
+
+  Definition AlwaysNonEmpty {A: Type} (xs: colist (list A)) := Forall (fun ys => nil <> hd ys) xs.
+  Definition AlwaysExistsNonEmpty {A: Type} (xs: colist (list A)) := Forall (Exists (fun ys => nil <> hd ys)) xs.
+  
+  Lemma Always_AlwaysExists : forall {A: Type} (P: colist A -> Prop) (xs: colist A), Forall P xs -> Forall (Exists P) xs.
+  Proof.
+    cofix.
+    intros A P xs H; case H as [H0 H1].
+    constructor.
+    - constructor; assumption.
+    - apply Always_AlwaysExists in H1; assumption.
+  Qed.
+
+  CoFixpoint concat {A: Type} (l: colist (list A)) : AlwaysNonEmpty l -> colist A.
+    intro H.
+    case l as [xs l'].
+    case xs as [|y ys]; [case H as [H _]; exfalso; apply H; reflexivity| ].
+    case ys as [|z zs].
+    - apply (cocons y),(concat A l'); case H as [_ H]; auto.
+    - apply (cocons y),(concat A (cocons (z :: zs) l')).
+      case H as [_ H].
+      constructor; [apply nil_cons|apply H].
+  Defined.
+
+  Definition test1 : colist (list nat) := unfold (fun x => (1 :: 2 :: nil, x)) 1.
+  
+  Lemma AlwaysNonEmpty_test1 : AlwaysNonEmpty test1.
+  Proof.
+    cofix; constructor; [apply nil_cons|auto].
+  Qed.
+
+  Example test1_concat : (take 4 (concat test1 AlwaysNonEmpty_test1)) = 1 :: 2 :: 1 :: 2 :: nil.
+  Proof. reflexivity. Qed.
+
 End CoList.
 
 Notation colist := CoList.colist.

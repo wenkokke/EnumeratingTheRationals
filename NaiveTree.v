@@ -5,7 +5,8 @@ Require Import PArith.
 Require Import QArith.
 (* end hide *)
 
-(** * Enumerating The Rationals *)
+(** * Enumerating The Rationals: Naive Approach *)
+
 Module Naive.
 
   Definition next (p: positive*positive) : (positive*positive)*Q*(positive*positive) :=

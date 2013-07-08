@@ -5,7 +5,8 @@ Require Import PArith.
 Require Import QArith.
 (* end hide *)
 
-(** ** The Calkin-Wilf Tree *)
+(** ** Enumerating The Rationals: The Calkin-Wilf Tree *)
+
 Module CalkinWilf.
 
   Local Open Scope positive_scope.
