@@ -7,6 +7,9 @@ Require Import QArith.
 
 (** * Enumerating The Rationals: Naive Approach *)
 
+(** _Current Status_: 
+  *)
+
 Module Naive.
 
   Definition next (p: positive*positive) : (positive*positive)*Q*(positive*positive) :=
@@ -42,11 +45,12 @@ Module Naive.
     reflexivity.
   Qed.
 
-  (* We have to somehow prove a duality between [next] and [findp],
-     where in [next] if [n] increases we consume a [Left] path, if [d]
-     increases we consume a [Right] path, and in [findp] we generate
-     a [Left] path as long as we can consume successors of [n], and 
-     [Right] paths as long as we can consume successors of [d]. *)
+  (** We have to somehow prove a duality between [next] and [findp],
+      where in [next] if [n] increases we consume a [Left] path, if [d]
+      increases we consume a [Right] path, and in [findp] we generate
+      a [Left] path as long as we can consume successors of [n], and 
+      [Right] paths as long as we can consume successors of [d].
+    *)
 
   Lemma findp_correct (n d: positive) : CoTree.lookup (findp n d) tree = 'n # d.
   Proof.

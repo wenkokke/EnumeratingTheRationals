@@ -3,54 +3,50 @@ Require Import List.
 Require Import CoList.
 (* end hide *)
 
-(** ** Lists *)
-
-Module List.
-  
-  Definition hd {A} (xs: list A) : nil<>xs -> A.
-    refine(match xs as ys return nil<>ys -> A with
-             | nil      => fun h => _
-             | cons x _ => fun h => x
-           end).
-    exfalso; apply h; reflexivity.
-  Defined.
-
-End List.
-
-(** ** CoTrees *)
+(** * CoTrees *)
 
 Module CoTree.
+
+  (** ** Defining CoTrees *)
+  (** We define [cotree]s to have a single constructor; [cocons].
+      This guarantees that the tree does not have any terminating
+      branches, which will be extremely convenient later on.
+    *)
 
   CoInductive cotree (A: Type) :=
   | conode : cotree A -> A -> cotree A -> cotree A.
 
-  (** Constructs [cotrees]s by iteratively unfolding values. *)
+  (** We can construct [cotree]s by iteratively unfolding values. *)
 
   CoFixpoint unfold {A B: Type} (f: B -> (B*A*B)) (e: B) : cotree A :=
     match f e with
       | (l,x,r) => conode _ (unfold f l) x (unfold f r)
     end.
-
-  (** Returns the [root] of a [cotree], which is the topmost value. *)
+    
+  (** Below we introduce a number of operations to deconstruct [cotree]s,
+      analogous to the [hd] and [tl] and tail operations on a [colist]:
+      
+      [root] returns the [root] of a [cotree], which is the topmost value,
+    *)
 
   Definition root {A: Type} (t: cotree A) : A :=
     match t with
       | conode _ x _ => x
     end.
 
-  (** Returns the left subtree of a [cotree]. *)
+  (** and [left] and [right] return the left or right subtrees of a [cotree]. *)
   
   Definition left {A: Type} (t: cotree A) : cotree A :=
     match t with
       | conode l _ _ => l
     end.
-
-  (** Returns the right subtree of a [cotree]. *)
   
   Definition right {A: Type} (t: cotree A) : cotree A :=
     match t with
       | conode _ _ r => r
     end.
+    
+  (** ** Indexing CoTrees *)
 
   (** Define an inductive datatype for performing queries on
       [cotree]s, as the [nat] type is for [colist]s. *)
@@ -66,7 +62,10 @@ Module CoTree.
       | Left  p => lookup p (left t)
       | Right p => lookup p (right t)
     end.
-        
+    
+  (** ** Properties on CoTrees *)
+  
+  (** *** Equality between subtrees *)
   (** Equality as defined on [cotree]s; to prove (co)equality,
       one must show that the [root]s of the two trees are equal,
       and that both of their subtrees are equal.
@@ -158,7 +157,11 @@ Module CoTree.
       apply Eq_trans.
   Qed.
 
-  (** [In] defines proofs on the elements of a [cotree]. *)
+  (** *** Membership of subtrees *)
+  (** The predicate [In] [x] [t] proves the membership of an element
+      [x] to the [cotree] [t], and the predicate [At] relates membership
+      proofs to the [lookup] function.
+    *)
   
   Inductive In {A: Type} (x: A) (t: cotree A) : Prop :=
   | In_root  : (x = root t) -> In x t
@@ -182,13 +185,31 @@ Module CoTree.
     - intros t H IH; elim IH; clear IH; intros p IH; exists (Left  p); destruct t; simpl in *; assumption.
     - intros t H IH; elim IH; clear IH; intros p IH; exists (Right p); destruct t; simpl in *; assumption.
   Qed.
+  
+  Lemma In_path : forall {A} x (t: cotree A),
+    In x t -> exists p, x = lookup p t.
+  Proof.
+    intros A x t H.
+    induction H as [|t H IH|t H IH].
+    - exists Here; auto.
+    - elim IH; clear IH; intros p IH; exists (Left p); auto.
+    - elim IH; clear IH; intros p IH; exists (Right p); auto.
+  Qed.
     
-  (** [Exists] defines proofs on the subtrees of a [cotree] *)
+  (** *** Existential proofs on subtrees *)
+  (** [Exists] defines an existential proof on the subtrees of
+      a [cotree]; it's meaning is that in the [cotree], there will
+      _eventually_ be a subtree for which a certain predicate [P] holds.
+    *)
 
   Inductive Exists {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Exists_here  : P t -> Exists P t
   | Exists_left  : Exists P (left t) -> Exists P t
   | Exists_right : Exists P (right t) -> Exists P t.
+  
+  (** Again, we relate the more general [Exists] predicate to the previously
+      defined [In] and [At] predicates.
+    *)
 
   Definition At_Exists : forall {A: Type} (P: A -> Prop) (t: cotree A) (p: path),
     P (lookup p t) -> Exists (fun t => P (root t)) t.
@@ -220,7 +241,9 @@ Module CoTree.
       intros HP IH; exists x; split. assumption. apply In_right; assumption.
   Qed.
 
-  (** [Forall] defines a proof on all subtrees of a [cotree] *)
+  (** *** Universal proofs on subtrees *)
+  (** [Forall] defines a proof on all subtrees of a [cotree]; it's meaning
+      is that for all the subtrees of a [cotree] a predicate [P] holds. *)
 
   CoInductive Forall {A: Type} (P: cotree A -> Prop) (t: cotree A) : Prop :=
   | Always : P t -> Forall P (left t) -> Forall P (right t) -> Forall P t.
@@ -242,6 +265,10 @@ Module CoTree.
       - apply Case_right in H; apply Forall_coind in H; assumption.
     Qed.
   End Forall_coind_def.
+  
+  (** Below we define a few simple lemmas to help deconstrucing
+      [Forall] proofs.
+    *)
 
   Lemma Forall_here : forall {A} P (t: cotree A), Forall P t -> P t.
     intros A P t H; destruct H as [H0 HL HR]; assumption.
@@ -254,6 +281,10 @@ Module CoTree.
   Lemma Forall_right : forall {A} P (t: cotree A), Forall P t -> Forall P (right t).
     intros A P t H; destruct H as [H0 HL HR]; assumption.
   Qed.
+  
+  (** And again, we relate the new predicate [Forall] to the previously
+      defined predicates.
+    *)
 
   Theorem ForallP_ExistsP : forall {A} P (t: cotree A),
     Forall P t -> Exists P t.
@@ -302,10 +333,14 @@ Module CoTree.
     - intros t H0 IH H. apply Forall_left  in H; apply IH in H. assumption.
     - intros t H0 IH H. apply Forall_right in H; apply IH in H. assumption.
   Qed.
+  
+  (** ** Functions on CoTrees *)
+  (** Below we shall introduce several usefull functions on [cotree]s. *)
 
+  (** *** Maps over CoTrees *)
+  (** The [map] function applies a function to every element of a [cotree]. *)
+  
   Section map_def.
-    
-    (** Definition of [map] over [cotree]s. *)
 
     CoFixpoint map {A B: Type} (f: A -> B) (t: cotree A) : cotree B :=
       match t with
@@ -327,13 +362,39 @@ Module CoTree.
     Qed.
 
   End map_def.
+  
+  (** *** Breadth-First Traversal of CoTrees *)
+  (** _Current Status: though breadth-first traversal works, proving its correctness is quite hard_.
+    *)
 
   Section bf_def.
+    
+    (** The implementation of [bf] as originally used in the paper
+        is as follows.
+<<
+    bf :: Tree a -> [a]
+    bf = concat . foldTree glue
+      where
+      glue (a,xs,ys) = [a] : zipWith (++) xs ys
+>>
+        We have, however, only recently started investigating translating
+        this function to Coq, due to its dependency on [concat] (and therefore
+        on proofs for [AlwaysExistsNonEmpty], which are quite hard to do.
+        
+        The implementation we use could instead be read as follows.
+<<
+    bf :: Tree a -> [a]
+    bf t = bf_acc [t]
+      where
+      bf_acc :: [Tree a] -> [a]
+      bf_acc ((Node l x r) : rest) = x : (bf_acc (rest ++ [l,r]))
+>>
 
-    (** Performs a breadth-first walk over a forest of [cotree]s, provided that
-        the forest is provably non-empty. *)
+        Here [bf_acc] Performs a breadth-first walk over a list of [cotree]s, provided that
+        the list is not empty.
+      *)
   
-    CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : nil<>ts -> colist A.
+    CoFixpoint bf_acc {A: Type} (ts: list (cotree A)) : nil <> ts -> colist A.
       refine (match ts as xs return nil<>xs -> colist A with
                 | nil       => fun h => _
                 | cons t ts => fun h =>
@@ -345,38 +406,22 @@ Module CoTree.
       apply app_cons_not_nil.
     Defined.
 
-    (** Performs a breadth-first walk over a [cotree], returning a [colist]. *)
+    (** And [bf] simply delegates to [bf_acc]. *)
     
     Definition bf {A: Type} (t: cotree A) : colist A.
       refine (bf_acc (t :: nil) _).
       apply nil_cons.
     Defined.
 
-    Lemma bf_acc_hd {A} (ts: list (cotree A)) (H: nil<>ts) : CoList.hd (bf_acc ts H) = root (List.hd ts H).
+    Lemma bf_acc_hd {A} (ts: list (cotree A)) (H: nil <> ts) :
+      CoList.hd (bf_acc ts H) = root (List.hd ts H).
     Proof.
       destruct ts as [|t ts].
       - exfalso; apply H; reflexivity.
       - destruct t; reflexivity.
     Qed.
 
-    Lemma In_path : forall {A} x (t: cotree A),
-      In x t -> exists p, x = lookup p t.
-    Proof.
-      intros A x t H.
-      induction H as [|t H IH|t H IH].
-      - exists Here; auto.
-      - elim IH; clear IH; intros p IH; exists (Left p); auto.
-      - elim IH; clear IH; intros p IH; exists (Right p); auto.
-    Qed.
-
-    Lemma In_parent : forall {A} x (l: cotree A),
-      forall y r, CoList.In x (bf l) -> CoList.In x (bf (conode A l y r)).
-    Proof.
-      intros A x l y r H.
-      apply CoList.In_further.
-    Admitted.
-
-    Theorem In_bf : forall {A} x (t: cotree A),
+    Theorem bf_correct : forall {A} x (t: cotree A),
       In x t -> CoList.In x (bf t).
     Proof.
       intros A x t H.

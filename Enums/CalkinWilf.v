@@ -7,6 +7,9 @@ Require Import QArith.
 
 (** ** Enumerating The Rationals: The Calkin-Wilf Tree *)
 
+(** _Current Status_: 
+  *)
+
 Module CalkinWilf.
 
   Local Open Scope positive_scope.

@@ -1,23 +1,31 @@
 
-all: CoList.vo CoTree.vo Naive.vo SternBrocot.vo CalkinWilf.vo
+all: Data/List.vo Data/CoList.vo Data/CoTree.vo Enums/NaiveEnum.vo Enums/NaiveTree.vo Enums/SternBrocot.vo Enums/CalkinWilf.vo
 
-doc:
-	coqdoc -s CoList.v CoTree.v Naive.v SternBrocot.v CalkinWilf.v
+doc: all
+	coqdoc --no-index -s Data/List.v Data/CoList.v Data/CoTree.v Enums/NaiveEnum.v Enums/NaiveTree.v Enums/SternBrocot.v Enums/CalkinWilf.v
 
 clean:
-	@rm -f *.vo *.glob *.html coqdoc.css
+	@rm -f *.html coqdoc.css
+	@rm -f Data/*.vo Data/*.glob
+	@rm -f Enums/*.vo Enums/*.glob
 
-CoList.vo:
-	coqc -I . CoList.v
+Data/List.vo:
+	coqc Data/List.v
+	
+Data/CoList.vo:
+	coqc -I Data Data/CoList.v
 
-CoTree.vo: CoList.vo
-	coqc -I . CoTree.v
+Data/CoTree.vo: Data/CoList.vo
+	coqc -I Data Data/CoTree.v
 	
-Naive.vo: CoList.vo CoTree.vo
-	coqc -I . Naive.v
+Enums/NaiveEnum.vo: Data/CoList.vo
+	coqc -I Data Enums/NaiveEnum.v
 	
-SternBrocot.vo: CoList.vo CoTree.vo
-	coqc -I . SternBrocot.v
+Enums/NaiveTree.vo: Data/CoList.vo Data/CoTree.vo
+	coqc -I Data Enums/NaiveTree.v
 	
-CalkinWilf.vo: CoList.vo CoTree.vo
-	coqc -I . CalkinWilf.v
+Enums/SternBrocot.vo: Data/CoList.vo Data/CoTree.vo
+	coqc -I Data Enums/SternBrocot.v
+	
+Enums/CalkinWilf.vo: Data/CoList.vo Data/CoTree.vo
+	coqc -I Data Enums/CalkinWilf.v
