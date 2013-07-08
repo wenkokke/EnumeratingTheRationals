@@ -1,7 +1,9 @@
+(* begin hide *)
 Require Import CoList.
 Require Import CoTree.
 Require Import PArith.
 Require Import QArith.
+(* end hide *)
 
 (** ** The Calkin-Wilf Tree *)
 Module CalkinWilf.

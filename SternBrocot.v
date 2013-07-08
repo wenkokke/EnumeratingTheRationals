@@ -1,9 +1,11 @@
+(* begin hide *)
 Require Import CoList.
 Require Import CoTree.
 Require Import PArith.
 Require Import NArith.
 Require Import QArith.
 Require Import Recdef.
+(* end hide *)
 
 (** ** The Stern-Brocot Tree *)
 Module SternBrocot.
