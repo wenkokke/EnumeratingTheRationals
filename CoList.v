@@ -1,5 +1,7 @@
+(* begin hide *)
 Require Import List.
 Require Import Streams.
+(* end hide *)
 
 (** ** CoLists *)
 

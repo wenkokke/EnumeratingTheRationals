@@ -1,5 +1,7 @@
+(* begin hide *)
 Require Import List.
 Require Import CoList.
+(* end hide *)
 
 (** ** Lists *)
 
