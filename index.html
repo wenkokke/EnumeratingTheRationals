@@ -1,42 +1,149 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-  <meta http-equiv="Content-Style-Type" content="text/css" />
-  <meta name="generator" content="pandoc" />
-  <title></title>
-  <link rel="stylesheet" href="doc/coqdoc.css" type="text/css" />
-</head>
-<body>
-<h1 id="enumerating-the-rationals">Enumerating The Rationals</h1>
-<p>In this repository I present a formalization of the functional pearl <a href="http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/rationals.pdf">&quot;Enumerating the Rationals&quot;</a> by Gibbons, Lester and Bird in Coq.</p>
-<p>My approach is divided into two parts:</p>
-<ol style="list-style-type: decimal">
-<li>implement the primitives for reasoning about codata;</li>
-<li>implement the enumerations discussed in the paper.</li>
-</ol>
-<p>Each module is implemented in literal Coq, and contains further documentation.</p>
-<h2 id="data-and-codata">Data and CoData</h2>
-<p>There aren't many theories regarding CoData (or CoInductives) in Coq's standard library. Because of this, I've implemented several structures myself. These packages can be found in the <code>CoData</code> directory.</p>
-<p>First of all, I've implemented a library for reaoning about CoLists, based on Coq's Stream datatype. I've adapted the names to match better with the similar constructs for lists, and implemented several theories regarding membership, concatination and the relation with finite lists. For more on CoLists see <a href="doc/CoList.html">the CoList module</a>.</p>
-<p>Secondly, I've implemented a library for reaoning about CoTrees. This libary was written from the ground up, and includes many of the same structures as the CoList module. Aside from this, it also includes several theories that will be especially usefull when implementing the enumerations from the paper, such as breath-first traversal. For more on CoTrees see <a href="doc/CoTree.html">the CoTree module</a>.</p>
-<p>Lastly, I've implemented a small extension over the standard List module, which can be found in the <code>Data</code> directory. For more on this, see <a href="doc/List.html">the List module</a>.</p>
-<h2 id="the-naive-tree">The Naive Tree</h2>
-<p>Our very first attempt is not discussed in the paper, but was written to test the <code>CoTree</code> module. It describes a tree of rational numbers, where branching to the left means an increase in numerator and branching to the right means an increase in the denominator.</p>
-<p>It is simple to see that this tree contains all rational numbers, and it in fact many, many duplicates.</p>
-<p>While we had little trouble construcing this tree, and subsequently in deconstructing it to an enumeration, it already proved quite hard to prove some simple properties with regard to this tree.</p>
-<p>For more on this approach see <a href="doc/NaiveTree.html">the NaiveTree module</a>.</p>
-<h2 id="the-naive-enumeration">The Naive Enumeration</h2>
-<p>The first formalisation of an algorithm disussed in the paper involves deforesting the matrix in which, much as in the previous approach, moving to the next column increases the numerator and moving to the next row increases the denominator.</p>
-<p>It is simple to see that this matrix contains all rational numbers, but the problem here is that it still contains pairs of rationals that reduce to one another.</p>
-<p>We have adapted the algorithm that generates the deforested matrix directly, but this already proved quite the challenge, and it involves a concatination of a colist of lists, which is only possible if we know for certain that eventually we will encounter a nonempty list.</p>
-<p>For more on this approach see <a href="doc/NaiveEnum.html">the NaiveEnum module</a>.</p>
-<h2 id="the-stern-brocot-tree">The Stern-Brocot Tree</h2>
-<p>The second formalisation involves deforesting the Stern-Brocot tree, which exploits the relation between the execution trace of Eulid's GCD algorithm and its usage in the reduction of rational numbers.</p>
-<p>We have adapted the algorithm that generates the tree using a stepper function, and have attempted to prove several properties with regard to this implementation. Furthermore, we have implemented a GCD function that records its trace, and have attempted to prove several claims made in the paper with regards to this algorithm.</p>
-<p>For more on this approach see <a href="doc/SternBrocot.html">the SternBrocot module</a>.</p>
-<h2 id="the-calkin-wilf-tree">The Calkin-Wilf Tree</h2>
-<p>The last formalisation involves a direct construction of the Calkin-Wilf tree. Though we haven't had the time to prove much with regards to this tree, it's construction was too simple not to include.</p>
-<p>For more on this approach see <a href="doc/CalkinWilf.html">the CalkinWilf module</a>.</p>
-</body>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+    <meta http-equiv="Content-Style-Type" content="text/css" />
+    <title>
+      Enumerating The Rationals
+    </title>
+    <link rel="stylesheet" href="doc/coqdoc.css" type="text/css" />
+  </head>
+  <body>
+    <div id="page">
+      <div id="main">
+        <div class="doc">
+          <h1 id="enumerating-the-rationals">
+            Enumerating The Rationals
+          </h1>
+          <p>
+            In this repository I present a formalization of the functional pearl
+            <a href=
+            "http://www.cs.ox.ac.uk/people/jeremy.gibbons/publications/rationals.pdf">
+            "Enumerating the Rationals"</a> by Gibbons, Lester and Bird in Coq.
+          </p>
+          <p>
+            My approach is divided into two parts:
+          </p>
+          <ol style="list-style-type: decimal">
+            <li>implement the primitives for reasoning about codata;
+            </li>
+            <li>implement the enumerations discussed in the paper.
+            </li>
+          </ol>
+          <p>
+            Each module is implemented in literal Coq, and contains further
+            documentation.
+          </p>
+          <h2 class="section" id="data-and-codata">
+            Data and CoData
+          </h2>
+          <p>
+            There aren't many theories regarding CoData (or CoInductives) in Coq's
+            standard library. Because of this, I've implemented several structures
+            myself. These packages can be found in the <code>CoData</code> directory.
+          </p>
+          <p>
+            First of all, I've implemented a library for reaoning about CoLists,
+            based on Coq's Stream datatype. I've adapted the names to match better
+            with the similar constructs for lists, and implemented several theories
+            regarding membership, concatination and the relation with finite lists.
+            For more on CoLists see <a href="doc/CoList.html">the CoList module</a>.
+          </p>
+          <p>
+            Secondly, I've implemented a library for reaoning about CoTrees. This
+            libary was written from the ground up, and includes many of the same
+            structures as the CoList module. Aside from this, it also includes
+            several theories that will be especially usefull when implementing the
+            enumerations from the paper, such as breath-first traversal. For more on
+            CoTrees see <a href="doc/CoTree.html">the CoTree module</a>.
+          </p>
+          <p>
+            Lastly, I've implemented a small extension over the standard List module,
+            which can be found in the <code>Data</code> directory. For more on this,
+            see <a href="doc/List.html">the List module</a>.
+          </p>
+          <h2 class="section" id="the-naive-tree">
+            The Naive Tree
+          </h2>
+          <p>
+            Our very first attempt is not discussed in the paper, but was written to
+            test the <code>CoTree</code> module. It describes a tree of rational
+            numbers, where branching to the left means an increase in numerator and
+            branching to the right means an increase in the denominator.
+          </p>
+          <p>
+            It is simple to see that this tree contains all rational numbers, and it
+            in fact many, many duplicates.
+          </p>
+          <p>
+            While we had little trouble construcing this tree, and subsequently in
+            deconstructing it to an enumeration, it already proved quite hard to
+            prove some simple properties with regard to this tree.
+          </p>
+          <p>
+            For more on this approach see <a href="doc/NaiveTree.html">the NaiveTree
+            module</a>.
+          </p>
+          <h2 class="section" id="the-naive-enumeration">
+            The Naive Enumeration
+          </h2>
+          <p>
+            The first formalisation of an algorithm disussed in the paper involves
+            deforesting the matrix in which, much as in the previous approach, moving
+            to the next column increases the numerator and moving to the next row
+            increases the denominator.
+          </p>
+          <p>
+            It is simple to see that this matrix contains all rational numbers, but
+            the problem here is that it still contains pairs of rationals that reduce
+            to one another.
+          </p>
+          <p>
+            We have adapted the algorithm that generates the deforested matrix
+            directly, but this already proved quite the challenge, and it involves a
+            concatination of a colist of lists, which is only possible if we know for
+            certain that eventually we will encounter a nonempty list.
+          </p>
+          <p>
+            For more on this approach see <a href="doc/NaiveEnum.html">the NaiveEnum
+            module</a>.
+          </p>
+          <h2 class="section" id="the-stern-brocot-tree">
+            The Stern-Brocot Tree
+          </h2>
+          <p>
+            The second formalisation involves deforesting the Stern-Brocot tree,
+            which exploits the relation between the execution trace of Eulid's GCD
+            algorithm and its usage in the reduction of rational numbers.
+          </p>
+          <p>
+            We have adapted the algorithm that generates the tree using a stepper
+            function, and have attempted to prove several properties with regard to
+            this implementation. Furthermore, we have implemented a GCD function that
+            records its trace, and have attempted to prove several claims made in the
+            paper with regards to this algorithm.
+          </p>
+          <p>
+            For more on this approach see <a href="doc/SternBrocot.html">the
+            SternBrocot module</a>.
+          </p>
+          <h2 class="section" id="the-calkin-wilf-tree">
+            The Calkin-Wilf Tree
+          </h2>
+          <p>
+            The last formalisation involves a direct construction of the Calkin-Wilf
+            tree. Though we haven't had the time to prove much with regards to this
+            tree, it's construction was too simple not to include.
+          </p>
+          <p>
+            For more on this approach see <a href="doc/CalkinWilf.html">the
+            CalkinWilf module</a>.
+          </p>
+        </div>
+        <hr />
+        Code and documentation was written by Pepijn Kokke
+      </div>
+    </div>
+  </body>
 </html>
