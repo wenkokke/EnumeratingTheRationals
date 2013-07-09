@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>CalkinWilf</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab25"></a><h1 class="section">Enumerating The Rationals: The Calkin-Wilf Tree</h1>
+
+<div class="paragraph"> </div>
+
+ <i>Current Status: while the implementation of the tree and the deforestation
+    algorithm function perfectly, and were easy to implement, we haven't acutally
+    had the time to investigate proving anything with regard to our implementation</i>.
+  
+<div class="paragraph"> </div>
+
+ The third approach of enumerating the rationals explored in the paper is the
+    construction and deforestation of the Calkin-Wilf tree.
+
+<div class="paragraph"> </div>
+
+    The Calkin-Wilf tree maps all levels in the Stern-Brocot tree to their
+    bit-reversal permutation.
+
+<div class="paragraph"> </div>
+
+  
+    <img style="width:100%;" alt="The Calkin-Wilf Tree" src="calkin_wilf.png" />
+  
+
+<div class="paragraph"> </div>
+
+    Below we will construct the Calkin-Wilf tree.
+  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <a name="CalkinWilf"><span class="id" type="module">CalkinWilf</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">positive_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The algorithm used to construct the Calkin-Wilf tree in the paper can be
+      seen below. It trivially translates to Coq, because it avoids all <span class="inlinecode">0</span>'s,
+      and therefore we have no issues constructing rationals. Furthermore, it is
+      in itself much simpler.
+<pre>
+    rats6 :: [Rational]
+    rats6 = bf (unfold next (1, 1))
+      where next (m, n) = (m / n, (m, m + n), (n + m, n))
+</pre>
+      Our translation of the algorithm can be seen below.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CalkinWilf.next"><span class="id" type="definition">next</span></a> (<span class="id" type="var">q</span>:<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">)*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*(</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">)</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="CalkinWilf.html#q"><span class="id" type="variable">q</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">((</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">),</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Zpos"><span class="id" type="constructor">Zpos</span></a> <span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">#</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,(</span></a><span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">))</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CalkinWilf.tree"><span class="id" type="definition">tree</span></a> : <a class="idref" href="CoTree.html#cotree"><span class="id" type="abbreviation">cotree</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a> := <a class="idref" href="CoTree.html#CoTree.unfold"><span class="id" type="definition">CoTree.unfold</span></a> <a class="idref" href="CalkinWilf.html#CalkinWilf.next"><span class="id" type="definition">next</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CalkinWilf.enum"><span class="id" type="definition">enum</span></a> : <a class="idref" href="CoList.html#colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a> := <a class="idref" href="CoTree.html#CoTree.bf"><span class="id" type="definition">CoTree.bf</span></a> <a class="idref" href="CalkinWilf.html#CalkinWilf.tree"><span class="id" type="definition">tree</span></a>.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <a class="idref" href="CalkinWilf.html#"><span class="id" type="module">CalkinWilf</span></a>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

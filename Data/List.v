@@ -3,7 +3,7 @@ Require Import List.
 Require Export List.
 (* end hide *)
 
-(** ** Lists *)
+(** * Lists *)
 (** We require a small extension to the default List module.
     Therefore, we both import and export the default List module.
   *)

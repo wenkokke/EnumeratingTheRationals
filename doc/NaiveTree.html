@@ -1,0 +1,164 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>NaiveTree</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab20"></a><h1 class="section">Enumerating The Rationals: Naive Tree</h1>
+
+<div class="paragraph"> </div>
+
+ <i>Current Status: it seems to be quite diffucult to prove the correctness
+    of <span class="inlinecode"><span class="id" type="var">find</span></span> on a specific tree. The problem with an induction proof here is
+    that the tree's structure is hard-coded in the <span class="inlinecode"><span class="id" type="var">find</span></span> function, but is
+    passed as an argument to the <span class="inlinecode"><span class="id" type="var">lookup</span></span> function</i>.
+  
+<div class="paragraph"> </div>
+
+ Though not presented in the paper, we have constructed this simple
+    example to test the CoTree module, and the general proof strategy.
+
+<div class="paragraph"> </div>
+
+    The properties of this naive approach are even worse than those of
+    the naive enumeration presented in <span class="inlinecode"><span class="id" type="var">NaiveEnum</span></span>, as the tree will
+    contain many duplicates of the same <i>unreduced</i> rational.
+  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <a name="Naive"><span class="id" type="module">Naive</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">next</span></span> function for this tree can be seen as the equivalent Haskell function below.
+<pre>
+    next (n,d) = ((n + 1, d), n / d, (n, d + 1))
+</pre>
+      Below you can find the Coq translation of this function, as well as the <span class="inlinecode"><span class="id" type="var">tree</span></span> and <span class="inlinecode"><span class="id" type="var">enum</span></span>
+      definition using this function.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="Naive.next"><span class="id" type="definition">next</span></a> (<span class="id" type="var">p</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">)*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*(</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">)</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="NaiveTree.html#p"><span class="id" type="variable">p</span></a> <span class="id" type="keyword">with</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">((</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.succ"><span class="id" type="definition">Pos.succ</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a> <span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">),</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.ZArith.BinInt.html#Z.pos"><span class="id" type="abbreviation">Z.pos</span></a> <span class="id" type="var">n</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">#</span></a> <span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.succ"><span class="id" type="definition">Pos.succ</span></a> <span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">))</span></a> <span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="Naive.tree"><span class="id" type="definition">tree</span></a> := <a class="idref" href="CoTree.html#CoTree.unfold"><span class="id" type="definition">CoTree.unfold</span></a> <a class="idref" href="NaiveTree.html#Naive.next"><span class="id" type="definition">next</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a>1<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>%<span class="id" type="var">positive</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="Naive.enum"><span class="id" type="definition">enum</span></a> := <a class="idref" href="CoTree.html#CoTree.bf"><span class="id" type="definition">CoTree.bf</span></a> <a class="idref" href="NaiveTree.html#Naive.tree"><span class="id" type="definition">tree</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Next, we define a <span class="inlinecode"><span class="id" type="var">find</span></span> function that maps rationals to their position in the
+      tree--in this case, it maps it to the rightmost version.
+      The idea is that proving the correctness of this function will bring us a long
+      way towards proving our enumeration.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="Naive.findp"><span class="id" type="definition">findp</span></a> (<span class="id" type="var">n</span> <span class="id" type="var">d</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rec"><span class="id" type="definition">Pos.peano_rec</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<span class="id" type="keyword">fun</span> <span class="id" type="var">_</span> =&gt; <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rec"><span class="id" type="definition">Pos.peano_rec</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<span class="id" type="keyword">fun</span> <span class="id" type="var">_</span> =&gt; <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<a class="idref" href="CoTree.html#CoTree.Here"><span class="id" type="constructor">CoTree.Here</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<span class="id" type="keyword">fun</span> <span class="id" type="var">_</span> <span class="id" type="var">p</span> =&gt; <a class="idref" href="CoTree.html#CoTree.Right"><span class="id" type="constructor">CoTree.Right</span></a> <a class="idref" href="NaiveTree.html#p"><span class="id" type="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (<span class="id" type="keyword">fun</span> <span class="id" type="var">_</span> <span class="id" type="var">p</span> =&gt; <a class="idref" href="CoTree.html#CoTree.Left"><span class="id" type="constructor">CoTree.Left</span></a> <a class="idref" href="NaiveTree.html#p"><span class="id" type="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a class="idref" href="NaiveTree.html#n"><span class="id" type="variable">n</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="Naive.findp_l"><span class="id" type="lemma">findp_l</span></a> (<span class="id" type="var">n</span> <span class="id" type="var">d</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.succ"><span class="id" type="definition">Pos.succ</span></a> <a class="idref" href="NaiveTree.html#n"><span class="id" type="variable">n</span></a>) <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="CoTree.html#CoTree.Left"><span class="id" type="constructor">CoTree.Left</span></a> (<a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> <a class="idref" href="NaiveTree.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a>,<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rec"><span class="id" type="definition">Pos.peano_rec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rect_succ"><span class="id" type="lemma">Pos.peano_rect_succ</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="Naive.findp_r"><span class="id" type="lemma">findp_r</span></a> (<span class="id" type="var">d</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> 1 (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.succ"><span class="id" type="definition">Pos.succ</span></a> <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="CoTree.html#CoTree.Right"><span class="id" type="constructor">CoTree.Right</span></a> (<a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> 1 <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a>,<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rec"><span class="id" type="definition">Pos.peano_rec</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">rewrite</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_rect_succ"><span class="id" type="lemma">Pos.peano_rect_succ</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We have to somehow prove a duality between <span class="inlinecode"><span class="id" type="var">next</span></span> and <span class="inlinecode"><span class="id" type="var">findp</span></span>,
+      where in <span class="inlinecode"><span class="id" type="var">next</span></span> if <span class="inlinecode"><span class="id" type="var">n</span></span> increases we consume a <span class="inlinecode"><span class="id" type="var">Left</span></span> path, if <span class="inlinecode"><span class="id" type="var">d</span></span>
+      increases we consume a <span class="inlinecode"><span class="id" type="var">Right</span></span> path, and in <span class="inlinecode"><span class="id" type="var">findp</span></span> we generate
+      a <span class="inlinecode"><span class="id" type="var">Left</span></span> path as long as we can consume successors of <span class="inlinecode"><span class="id" type="var">n</span></span>, and 
+      <span class="inlinecode"><span class="id" type="var">Right</span></span> paths as long as we can consume successors of <span class="inlinecode"><span class="id" type="var">d</span></span>.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="Naive.findp_correct"><span class="id" type="lemma">findp_correct</span></a> (<span class="id" type="var">n</span> <span class="id" type="var">d</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="CoTree.html#CoTree.lookup"><span class="id" type="definition">CoTree.lookup</span></a> (<a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> <a class="idref" href="NaiveTree.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a>) <a class="idref" href="NaiveTree.html#Naive.tree"><span class="id" type="definition">tree</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Z_scope:''''_x"><span class="id" type="notation">'</span></a><a class="idref" href="NaiveTree.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">#</span></a> <a class="idref" href="NaiveTree.html#d"><span class="id" type="variable">d</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <a class="idref" href="NaiveTree.html#Naive.tree"><span class="id" type="definition">tree</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>] <span class="id" type="keyword">using</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_ind"><span class="id" type="definition">Pos.peano_ind</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">induction</span> <span class="id" type="var">d</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">d</span>] <span class="id" type="keyword">using</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_ind"><span class="id" type="definition">Pos.peano_ind</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">rewrite</span> <a class="idref" href="NaiveTree.html#Naive.findp_r"><span class="id" type="lemma">findp_r</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="Naive.find"><span class="id" type="definition">find</span></a> (<span class="id" type="var">q</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a>) : 0 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'<'_x"><span class="id" type="notation">&lt;</span></a> <a class="idref" href="NaiveTree.html#q"><span class="id" type="variable">q</span></a> -&gt; <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">CoTree.path</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">Hq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> <span class="id" type="var">q</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">n</span> <span class="id" type="var">d</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>|<span class="id" type="var">n</span>]; <span class="id" type="tactic">try</span> <span class="id" type="tactic">discriminate</span> <span class="id" type="var">Hq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> (<a class="idref" href="NaiveTree.html#Naive.findp"><span class="id" type="definition">findp</span></a> <span class="id" type="var">n</span> <span class="id" type="var">d</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="Naive.find_correct"><span class="id" type="lemma">find_correct</span></a> (<span class="id" type="var">q</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a>) (<span class="id" type="var">H</span>: 0 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'<'_x"><span class="id" type="notation">&lt;</span></a> <a class="idref" href="NaiveTree.html#q"><span class="id" type="variable">q</span></a>) : <a class="idref" href="CoTree.html#CoTree.lookup"><span class="id" type="definition">CoTree.lookup</span></a> (<a class="idref" href="NaiveTree.html#Naive.find"><span class="id" type="definition">find</span></a> <a class="idref" href="NaiveTree.html#q"><span class="id" type="variable">q</span></a> <a class="idref" href="NaiveTree.html#H"><span class="id" type="variable">H</span></a>) <a class="idref" href="NaiveTree.html#Naive.tree"><span class="id" type="definition">tree</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="NaiveTree.html#q"><span class="id" type="variable">q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">q</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">n</span> <span class="id" type="var">d</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>|<span class="id" type="var">n</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">unfold</span> <a class="idref" href="NaiveTree.html#Naive.find"><span class="id" type="definition">find</span></a>; <span class="id" type="tactic">apply</span> <a class="idref" href="NaiveTree.html#Naive.findp_correct"><span class="id" type="axiom">findp_correct</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">inversion</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+<span class="id" type="keyword">End</span> <a class="idref" href="NaiveTree.html#"><span class="id" type="module">Naive</span></a>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

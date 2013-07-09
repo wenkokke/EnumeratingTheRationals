@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>NaiveEnum</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab17"></a><h1 class="section">Enumerating The Rationals: Naive Enumeration</h1>
+
+<div class="paragraph"> </div>
+
+ <i>Current Status: although the function quite easily translates to
+    Coq, we require a proof of <span class="inlinecode"><span class="id" type="var">AlwaysExistsNonEmpty</span></span> in order to use
+    the <span class="inlinecode"><span class="id" type="var">concat</span></span> function; at the moment this is still the bottleneck</i>.
+  
+<div class="paragraph"> </div>
+
+ The first approach to enumerating the rationals explored in the paper
+    is a naive approach of deconstructing the following matrix.
+
+<div class="paragraph"> </div>
+
+  
+    <blockquote><table>
+    <tr><td> 1/1      </td><td> 2/1 </td><td> 3/1 </td><td> &hellip; </td><td> m/1 </td></tr>
+    <tr><td> 1/2      </td><td> 2/2 </td><td> 3/2 </td><td>          </td><td> m/2 </td></tr>
+    <tr><td> 1/3      </td><td> 2/3 </td><td> 3/3 </td><td>          </td><td> m/3 </td></tr>
+    <tr><td> &vellip; </td><td>     </td><td>     </td><td> &dtdot;  </td><td>     </td></tr>
+    <tr><td> 1/n      </td><td> 2/n </td><td> 3/n </td><td>          </td><td> m/n </td></tr>
+    </table></blockquote>
+  
+
+<div class="paragraph"> </div>
+
+    Which the original paper renders in Haskell as follows.
+<pre>
+    rats2 :: [Rational]
+    rats2 = concat [[ m / (d - m) | m &lt;- [1..d -1]]| d &lt;- [2..]]
+</pre>
+    Below we'll attempt to translate this function to Coq.
+  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <a name="NaiveEnum"><span class="id" type="module">NaiveEnum</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">positive_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab18"></a><h2 class="section">Working with Enumerations</h2>
+
+<div class="paragraph"> </div>
+
+ First, we'll need to implement the notations "<span class="inlinecode">[<span class="id" type="var">n</span>..]</span>" and "<span class="inlinecode">[<span class="id" type="var">m</span>..<span class="id" type="var">n</span>]</span>",
+      which Haskell translates to <span class="inlinecode"><span class="id" type="var">enumFrom</span></span> <span class="inlinecode"><span class="id" type="var">n</span></span> and <span class="inlinecode"><span class="id" type="var">enumFromTo</span></span> <span class="inlinecode"><span class="id" type="var">m</span></span> <span class="inlinecode"><span class="id" type="var">n</span></span>.
+
+<div class="paragraph"> </div>
+
+      <span class="inlinecode"><span class="id" type="var">enumFrom</span></span> creates an infinite list, counting from the given number.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="NaiveEnum.enumFrom"><span class="id" type="definition">enumFrom</span></a> <span class="id" type="var">n</span> := <a class="idref" href="CoList.html#CoList.unfold"><span class="id" type="definition">CoList.unfold</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">n</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.succ"><span class="id" type="definition">Pos.succ</span></a> <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>) <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" type="var">enumFromTo</span></span> creates a finite list, counting from the first number
+      upto the second number.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Fixpoint</span> <a name="NaiveEnum.enumFromTo'"><span class="id" type="definition">enumFromTo'</span></a> <span class="id" type="var">n</span> (<span class="id" type="var">m</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nat"><span class="id" type="inductive">nat</span></a>) := <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#O"><span class="id" type="constructor">O</span></a>   =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#S"><span class="id" type="constructor">S</span></a> <span class="id" type="var">m</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#cons"><span class="id" type="constructor">cons</span></a> <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a> (<a class="idref" href="NaiveEnum.html#enumFromTo'"><span class="id" type="definition">enumFromTo'</span></a> (<a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> 1) <a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="NaiveEnum.enumFromTo"><span class="id" type="definition">enumFromTo</span></a> <span class="id" type="var">n</span> <span class="id" type="var">m</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">if</span> (<a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'<=?'_x"><span class="id" type="notation">&lt;=?</span></a> <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a>) <span class="id" type="keyword">then</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a> <span class="id" type="keyword">else</span> <a class="idref" href="NaiveEnum.html#NaiveEnum.enumFromTo'"><span class="id" type="definition">enumFromTo'</span></a> <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.to_nat"><span class="id" type="definition">Pos.to_nat</span></a> (<a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <a class="idref" href="NaiveEnum.html#n"><span class="id" type="variable">n</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab19"></a><h2 class="section">Constructing the Enumeration</h2>
+
+<div class="paragraph"> </div>
+
+ Then, before we can define the final enumeration, we will need some lemmas
+      to help us prove <span class="inlinecode"><span class="id" type="var">AlwaysExistsNonEmpty</span></span> on the intermediate result.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="NaiveEnum.map_nil_cons"><span class="id" type="lemma">map_nil_cons</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span> <span class="id" type="var">B</span>} (<span class="id" type="var">f</span>: <a class="idref" href="NaiveEnum.html#A"><span class="id" type="variable">A</span></a> -&gt; <a class="idref" href="NaiveEnum.html#B"><span class="id" type="variable">B</span></a>) <span class="id" type="var">xs</span>, <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> <a class="idref" href="NaiveEnum.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">(</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.List.html#map"><span class="id" type="definition">map</span></a> <a class="idref" href="NaiveEnum.html#f"><span class="id" type="variable">f</span></a> <a class="idref" href="NaiveEnum.html#xs"><span class="id" type="variable">xs</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">B</span> <span class="id" type="var">f</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">xs</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">x</span> <span class="id" type="var">xs</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="var">exfalso</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.List.html#nil_cons"><span class="id" type="lemma">nil_cons</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For our translation we have rewritten the original Haskell code to the the
+      equivalent code below, which gets rid of the list comprehensions.
+<pre>
+    rats2 :: [Rational]
+    rats2 = concat (map (\d -&gt; map (\m -&gt; m / (d - m)) [1..d-1]) [2..])
+</pre>
+      Finally, we can enumerate the rationals.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="NaiveEnum.enum"><span class="id" type="definition">enum</span></a> : <a class="idref" href="CoList.html#colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">refine</span> (<a class="idref" href="CoList.html#CoList.concat"><span class="id" type="definition">CoList.concat</span></a> (<a class="idref" href="CoList.html#CoList.map"><span class="id" type="abbreviation">CoList.map</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">d</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.List.html#map"><span class="id" type="definition">List.map</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">m</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Z_scope:''''_x"><span class="id" type="notation">'</span></a><a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">#</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">(</span></a><a class="idref" href="NaiveEnum.html#d"><span class="id" type="variable">d</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <a class="idref" href="NaiveEnum.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">)</span></a>) (<a class="idref" href="NaiveEnum.html#NaiveEnum.enumFromTo"><span class="id" type="definition">enumFromTo</span></a> 1 <a class="idref" href="NaiveEnum.html#d"><span class="id" type="variable">d</span></a>)) (<a class="idref" href="NaiveEnum.html#NaiveEnum.enumFrom"><span class="id" type="definition">enumFrom</span></a> 2)) <span class="id" type="var">_</span>).<br/>
+&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <a class="idref" href="NaiveEnum.html#"><span class="id" type="module">NaiveEnum</span></a>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

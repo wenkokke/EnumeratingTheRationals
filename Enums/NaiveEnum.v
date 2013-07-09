@@ -6,17 +6,17 @@ Require Import QArith.
 Require Import Recdef.
 (* end hide *)
 
-(** * Enumerating The Rationals: Naive Approach *)
+(** * Enumerating The Rationals: Naive Enumeration *)
 
 (** _Current Status: although the function quite easily translates to
     Coq, we require a proof of [AlwaysExistsNonEmpty] in order to use
     the [concat] function; at the moment this is still the bottleneck_.
   *)
   
-(** The first explored approach to enumerating the rationals in the paper
+(** The first approach to enumerating the rationals explored in the paper
     is a naive approach of deconstructing the following matrix.
     
-    #
+  #
     <blockquote><table>
     <tr><td> 1/1      </td><td> 2/1 </td><td> 3/1 </td><td> &hellip; </td><td> m/1 </td></tr>
     <tr><td> 1/2      </td><td> 2/2 </td><td> 3/2 </td><td>          </td><td> m/2 </td></tr>
@@ -24,7 +24,7 @@ Require Import Recdef.
     <tr><td> &vellip; </td><td>     </td><td>     </td><td> &dtdot;  </td><td>     </td></tr>
     <tr><td> 1/n      </td><td> 2/n </td><td> 3/n </td><td>          </td><td> m/n </td></tr>
     </table></blockquote>
-    #
+  #
     
     Which the original paper renders in Haskell as follows.
 <<
