@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>CoList</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab2"></a><h1 class="section">CoLists</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <a name="CoList"><span class="id" type="module">CoList</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab3"></a><h2 class="section">Defining CoLists</h2>
+ A <span class="inlinecode"><span class="id" type="var">colist</span></span> is defined by analogy to the <span class="inlinecode"><span class="id" type="var">Stream</span></span> datatype,
+      so that we can use the high-level predicates defined in the
+      <span class="inlinecode"><span class="id" type="var">Coq.Lists.Streams</span></span> module. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.colist"><span class="id" type="abbreviation">colist</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Stream"><span class="id" type="inductive">Stream</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.cocons"><span class="id" type="abbreviation">cocons</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Cons"><span class="id" type="constructor">Cons</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.hd"><span class="id" type="abbreviation">hd</span></a>             := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#hd"><span class="id" type="definition">hd</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.tl"><span class="id" type="abbreviation">tl</span></a>             := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#tl"><span class="id" type="definition">tl</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.map"><span class="id" type="abbreviation">map</span></a>            := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#map"><span class="id" type="definition">map</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Eq"><span class="id" type="abbreviation">Eq</span></a>             := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#EqSt"><span class="id" type="inductive">EqSt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Eq_refl"><span class="id" type="abbreviation">Eq_refl</span></a>        := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#EqSt_reflex"><span class="id" type="lemma">EqSt_reflex</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Eq_sym"><span class="id" type="abbreviation">Eq_sym</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#sym_EqSt"><span class="id" type="lemma">sym_EqSt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Eq_trans"><span class="id" type="abbreviation">Eq_trans</span></a>       := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#trans_EqSt"><span class="id" type="lemma">trans_EqSt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Exists"><span class="id" type="abbreviation">Exists</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Exists"><span class="id" type="inductive">Exists</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Exists_here"><span class="id" type="abbreviation">Exists_here</span></a>    := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Here"><span class="id" type="constructor">Here</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Exists_further"><span class="id" type="abbreviation">Exists_further</span></a> := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Further"><span class="id" type="constructor">Further</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Forall"><span class="id" type="abbreviation">Forall</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#ForAll"><span class="id" type="inductive">ForAll</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Always"><span class="id" type="abbreviation">Always</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#HereAndFurther"><span class="id" type="constructor">HereAndFurther</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.Forall_coind"><span class="id" type="abbreviation">Forall_coind</span></a>   := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#ForAll_coind"><span class="id" type="lemma">ForAll_coind</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Notation</span> <a name="CoList.lookup"><span class="id" type="abbreviation">lookup</span></a>         := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">Str_nth</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We'd like <span class="inlinecode"><span class="id" type="var">lookup</span></span> to be transparent. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Hint Unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Constructing <span class="inlinecode"><span class="id" type="var">colist</span></span>s is done by iteratively unfolding values. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">CoFixpoint</span> <a name="CoList.unfold"><span class="id" type="definition">unfold</span></a> {<span class="id" type="var">A</span> <span class="id" type="var">B</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">f</span>: <a class="idref" href="CoList.html#B"><span class="id" type="variable">B</span></a> -&gt; (<a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="CoList.html#B"><span class="id" type="variable">B</span></a>)) (<span class="id" type="var">e</span>: <a class="idref" href="CoList.html#B"><span class="id" type="variable">B</span></a>) : <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="CoList.html#f"><span class="id" type="variable">f</span></a> <a class="idref" href="CoList.html#e"><span class="id" type="variable">e</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">x</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">xs</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <a class="idref" href="CoList.html#CoList.cocons"><span class="id" type="abbreviation">cocons</span></a>  <span class="id" type="var">x</span> (<a class="idref" href="CoList.html#unfold"><span class="id" type="definition">unfold</span></a> <a class="idref" href="CoList.html#f"><span class="id" type="variable">f</span></a> <span class="id" type="var">xs</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Furthermore, we can limit <span class="inlinecode"><span class="id" type="var">colist</span></span>s to <span class="inlinecode"><span class="id" type="var">list</span></span>s by taking any finite prefix. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Fixpoint</span> <a name="CoList.take"><span class="id" type="definition">take</span></a> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">n</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nat"><span class="id" type="inductive">nat</span></a>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#list"><span class="id" type="inductive">list</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="CoList.html#n"><span class="id" type="variable">n</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#O"><span class="id" type="constructor">O</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#S"><span class="id" type="constructor">S</span></a> <span class="id" type="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" type="var">cocons</span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#cons"><span class="id" type="constructor">cons</span></a> <span class="id" type="var">x</span> (<a class="idref" href="CoList.html#take"><span class="id" type="definition">take</span></a> <a class="idref" href="CoList.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab4"></a><h2 class="section">Properties on CoLists</h2>
+ We need some ways to prove properties on <span class="inlinecode"><span class="id" type="var">colist</span></span>s.
+      The simpelest of such proves is to prove that an <span class="inlinecode"><span class="id" type="var">x</span></span>
+      is an element of a certain <span class="inlinecode"><span class="id" type="var">colist</span></span>.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Inductive</span> <a name="CoList.In"><span class="id" type="inductive">In</span></a> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">x</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) : <span class="id" type="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a name="CoList.In_here"><span class="id" type="constructor">In_here</span></a>    : (<span class="id" type="var">x</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <span class="id" type="var">xs</span>) -&gt; <a class="idref" href="CoList.html#In"><span class="id" type="inductive">In</span></a> <span class="id" type="var">x</span> <span class="id" type="var">xs</span><br/>
+&nbsp;&nbsp;| <a name="CoList.In_further"><span class="id" type="constructor">In_further</span></a> : <a class="idref" href="CoList.html#In"><span class="id" type="inductive">In</span></a> <span class="id" type="var">x</span> (<a class="idref" href="CoList.html#CoList.tl"><span class="id" type="abbreviation">tl</span></a> <span class="id" type="var">xs</span>) -&gt; <a class="idref" href="CoList.html#In"><span class="id" type="inductive">In</span></a> <span class="id" type="var">x</span> <span class="id" type="var">xs</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Below we define <span class="inlinecode"><span class="id" type="var">At</span></span>, which turns a witness index into
+      a <span class="inlinecode"><span class="id" type="var">colist</span></span> into a proof that an element is in the <span class="inlinecode"><span class="id" type="var">colist</span></span>
+      (at that position).
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CoList.At"><span class="id" type="definition">At</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">x</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">n</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nat"><span class="id" type="inductive">nat</span></a>), (<a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="CoList.html#CoList.lookup"><span class="id" type="abbreviation">lookup</span></a> <a class="idref" href="CoList.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>) -&gt; <a class="idref" href="CoList.html#CoList.In"><span class="id" type="inductive">In</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span> <span class="id" type="var">n</span>; <span class="id" type="tactic">generalize</span> <span class="id" type="var">xs</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">xs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_here"><span class="id" type="constructor">In_here</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intro</span> <span class="id" type="var">xs</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">xs</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">y</span> <span class="id" type="var">ys</span>]; <span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">intro</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">IHn</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_further"><span class="id" type="constructor">In_further</span></a>; <span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Furthermore, we define the relations between the <span class="inlinecode"><span class="id" type="var">In</span></span> predicate,
+      and the predefined <span class="inlinecode"><span class="id" type="var">Exists</span></span> and <span class="inlinecode"><span class="id" type="var">Forall</span></span> predicates.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="CoList.In_At"><span class="id" type="lemma">In_At</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">x</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.In"><span class="id" type="inductive">In</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:'exists'_x_'..'_x_','_x"><span class="id" type="notation">exists</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:'exists'_x_'..'_x_','_x"><span class="id" type="notation">,</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="CoList.html#CoList.lookup"><span class="id" type="abbreviation">lookup</span></a> <a class="idref" href="CoList.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">H</span> <span class="id" type="var">xs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">exists</span> 0%<span class="id" type="var">nat</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">xs</span>. <span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a>. <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">n</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">exists</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#S"><span class="id" type="constructor">S</span></a> <span class="id" type="var">n</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CoList.At_Exists"><span class="id" type="definition">At_Exists</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">n</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nat"><span class="id" type="inductive">nat</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.lookup"><span class="id" type="abbreviation">lookup</span></a> <a class="idref" href="CoList.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>) -&gt; <a class="idref" href="CoList.html#CoList.Exists"><span class="id" type="abbreviation">Exists</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">l</span> =&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">n</span>; <span class="id" type="tactic">generalize</span> <span class="id" type="var">xs</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">xs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.Exists_here"><span class="id" type="abbreviation">Exists_here</span></a>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a> <span class="id" type="keyword">in</span> *; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> *.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <span class="id" type="var">IHn</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.Exists_further"><span class="id" type="abbreviation">Exists_further</span></a>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="CoList.In_Exists"><span class="id" type="lemma">In_Exists</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) (<span class="id" type="var">x</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'/\'_x"><span class="id" type="notation">/\</span></a> <a class="idref" href="CoList.html#CoList.In"><span class="id" type="inductive">In</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="CoList.html#CoList.Exists"><span class="id" type="abbreviation">Exists</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">l</span> =&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">x</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">HP</span> <span class="id" type="var">HM</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_At"><span class="id" type="lemma">In_At</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HM</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">HM</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">HM</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">n</span> <span class="id" type="var">HM</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> (<a class="idref" href="CoList.html#CoList.At_Exists"><span class="id" type="definition">At_Exists</span></a> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">n</span>); <span class="id" type="tactic">rewrite</span> <span class="id" type="var">HM</span> <span class="id" type="keyword">in</span> <span class="id" type="var">HP</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="CoList.Exists_In"><span class="id" type="lemma">Exists_In</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Exists"><span class="id" type="abbreviation">Exists</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">l</span> =&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:'exists'_x_'..'_x_','_x"><span class="id" type="notation">exists</span></a> <span class="id" type="var">x</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:'exists'_x_'..'_x_','_x"><span class="id" type="notation">,</span></a> <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'/\'_x"><span class="id" type="notation">/\</span></a> <a class="idref" href="CoList.html#CoList.In"><span class="id" type="inductive">In</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">H</span> <span class="id" type="var">xs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">exists</span> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <span class="id" type="var">xs</span>); <span class="id" type="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_here"><span class="id" type="constructor">In_here</span></a>; <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">x</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">IH</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">HP</span> <span class="id" type="var">IH</span>; <span class="id" type="tactic">exists</span> <span class="id" type="var">x</span>; <span class="id" type="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_further"><span class="id" type="constructor">In_further</span></a>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="CoList.Forall_here"><span class="id" type="lemma">Forall_here</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) <span class="id" type="var">xs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">l</span> =&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="CoList.Forall_further"><span class="id" type="lemma">Forall_further</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) <span class="id" type="var">xs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.tl"><span class="id" type="abbreviation">tl</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="CoList.Forall_In"><span class="id" type="lemma">Forall_In</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) <span class="id" type="var">xs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">l</span> =&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> (<a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <span class="id" type="keyword">forall</span> <span class="id" type="var">x</span>, <a class="idref" href="CoList.html#CoList.In"><span class="id" type="inductive">In</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">Hall</span> <span class="id" type="var">x</span> <span class="id" type="var">Hin</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.In_At"><span class="id" type="lemma">In_At</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">Hin</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">Hin</span>; <span class="id" type="tactic">intros</span> <span class="id" type="var">n</span> <span class="id" type="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">generalize</span> <span class="id" type="var">Hall</span> <span class="id" type="var">Heq</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">Hall</span> <span class="id" type="var">Hin</span> <span class="id" type="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">generalize</span> <span class="id" type="var">xs</span>; <span class="id" type="tactic">clear</span> <span class="id" type="var">xs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">Hall</span> <span class="id" type="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">destruct</span> <span class="id" type="var">xs</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">y</span> <span class="id" type="var">ys</span>]; <span class="id" type="tactic">unfold</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.Streams.html#Str_nth"><span class="id" type="definition">lookup</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">Heq</span>; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.Forall_here"><span class="id" type="lemma">Forall_here</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">Hall</span>; <span class="id" type="tactic">simpl</span> <span class="id" type="keyword">in</span> <span class="id" type="var">Hall</span>; <span class="id" type="tactic">rewrite</span> <span class="id" type="var">Heq</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">xs</span> <span class="id" type="var">Hall</span> <span class="id" type="var">Heq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> <a class="idref" href="CoList.html#CoList.Forall_further"><span class="id" type="lemma">Forall_further</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">Hall</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">IHn</span> <span class="id" type="keyword">in</span> <span class="id" type="var">Hall</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab5"></a><h2 class="section">Concatinating an infinite list of lists</h2>
+ We'll need a function to concatinate an infinite list of lists
+      in order to define the naive enumeration of rationals later on.
+
+<div class="paragraph"> </div>
+
+      We can only do this if we have a guarantee that always,
+      eventually there will be some list that isn't <span class="inlinecode"><span class="id" type="var">nil</span></span>, as an infinite
+      list of <span class="inlinecode"><span class="id" type="var">nil</span></span>s would never produce a <span class="inlinecode"><span class="id" type="var">cocons</span></span>.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CoList.AlwaysExistsNonEmpty"><span class="id" type="definition">AlwaysExistsNonEmpty</span></a> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#list"><span class="id" type="inductive">list</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>)) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> (<a class="idref" href="CoList.html#CoList.Exists"><span class="id" type="abbreviation">Exists</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">ys</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> <a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#ys"><span class="id" type="variable">ys</span></a>)) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+However, this notion is rather hard to prove, and since in most
+      cases none of the <span class="inlinecode"><span class="id" type="var">list</span></span>s will be <span class="inlinecode"><span class="id" type="var">nil</span></span>, we'll allow a proof of
+      <span class="inlinecode"><span class="id" type="var">AlwaysExistsNonEmpty</span></span> based on a proof of <span class="inlinecode"><span class="id" type="var">AlwaysNonEmpty</span></span>, using
+      the <span class="inlinecode"><span class="id" type="var">Always_AlwaysExists</span></span> lemma.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CoList.AlwaysNonEmpty"><span class="id" type="definition">AlwaysNonEmpty</span></a> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#list"><span class="id" type="inductive">list</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>)) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">ys</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> <a class="idref" href="CoList.html#CoList.hd"><span class="id" type="abbreviation">hd</span></a> <a class="idref" href="CoList.html#ys"><span class="id" type="variable">ys</span></a>) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="CoList.Always_AlwaysExists"><span class="id" type="lemma">Always_AlwaysExists</span></a> : <span class="id" type="keyword">forall</span> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">P</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a> -&gt; <span class="id" type="keyword">Prop</span>) (<span class="id" type="var">xs</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a> <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a> -&gt; <a class="idref" href="CoList.html#CoList.Forall"><span class="id" type="abbreviation">Forall</span></a> (<a class="idref" href="CoList.html#CoList.Exists"><span class="id" type="abbreviation">Exists</span></a> <a class="idref" href="CoList.html#P"><span class="id" type="variable">P</span></a>) <a class="idref" href="CoList.html#xs"><span class="id" type="variable">xs</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">cofix</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">A</span> <span class="id" type="var">P</span> <span class="id" type="var">xs</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">case</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">H0</span> <span class="id" type="var">H1</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">constructor</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> <span class="id" type="var">Always_AlwaysExists</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H1</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Since the <span class="inlinecode"><span class="id" type="var">concat</span></span> function using proofs of the type <span class="inlinecode"><span class="id" type="var">AlwaysExistsNonEmpty</span></span>
+      is also rather hard to write, the current version is using the much stronger
+      predicate <span class="inlinecode"><span class="id" type="var">AlwaysNonEmpty</span></span>.
+
+<div class="paragraph"> </div>
+
+      <i>TODO: Update <span class="inlinecode"><span class="id" type="var">concat</span></span> to depend only on the weakened <span class="inlinecode"><span class="id" type="var">AlwaysExistsNonEmpty</span></span></i>.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">CoFixpoint</span> <a name="CoList.concat"><span class="id" type="definition">concat</span></a> {<span class="id" type="var">A</span>: <span class="id" type="keyword">Type</span>} (<span class="id" type="var">l</span>: <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#list"><span class="id" type="inductive">list</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>)) : <a class="idref" href="CoList.html#CoList.AlwaysNonEmpty"><span class="id" type="definition">AlwaysNonEmpty</span></a> <a class="idref" href="CoList.html#l"><span class="id" type="variable">l</span></a> -&gt; <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="CoList.html#A"><span class="id" type="variable">A</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intro</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">l</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">xs</span> <span class="id" type="var">l'</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">xs</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">y</span> <span class="id" type="var">ys</span>]; [<span class="id" type="tactic">case</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">H</span> <span class="id" type="var">_</span>]; <span class="id" type="var">exfalso</span>; <span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">reflexivity</span>| ].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">ys</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">z</span> <span class="id" type="var">zs</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> (<a class="idref" href="CoList.html#CoList.cocons"><span class="id" type="abbreviation">cocons</span></a> <span class="id" type="var">y</span>),(<span class="id" type="var">concat</span> <span class="id" type="var">A</span> <span class="id" type="var">l'</span>); <span class="id" type="tactic">case</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">_</span> <span class="id" type="var">H</span>]; <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> (<a class="idref" href="CoList.html#CoList.cocons"><span class="id" type="abbreviation">cocons</span></a> <span class="id" type="var">y</span>),(<span class="id" type="var">concat</span> <span class="id" type="var">A</span> (<a class="idref" href="CoList.html#CoList.cocons"><span class="id" type="abbreviation">cocons</span></a> (<span class="id" type="var">z</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> <span class="id" type="var">zs</span>) <span class="id" type="var">l'</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">H</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">_</span> <span class="id" type="var">H</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">constructor</span>; [<span class="id" type="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.List.html#nil_cons"><span class="id" type="lemma">nil_cons</span></a>|<span class="id" type="tactic">apply</span> <span class="id" type="var">H</span>].<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+To check the function of <span class="inlinecode"><span class="id" type="var">concat</span></span>, we can run a small testcase. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="CoList.test1"><span class="id" type="definition">test1</span></a> : <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">colist</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#list"><span class="id" type="inductive">list</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nat"><span class="id" type="inductive">nat</span></a>) := <a class="idref" href="CoList.html#CoList.unfold"><span class="id" type="definition">unfold</span></a> (<span class="id" type="keyword">fun</span> <span class="id" type="var">x</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a>1 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a> <a class="idref" href="CoList.html#x"><span class="id" type="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>) 1.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="CoList.AlwaysNonEmpty_test1"><span class="id" type="lemma">AlwaysNonEmpty_test1</span></a> : <a class="idref" href="CoList.html#CoList.AlwaysNonEmpty"><span class="id" type="definition">AlwaysNonEmpty</span></a> <a class="idref" href="CoList.html#CoList.test1"><span class="id" type="definition">test1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>. <span class="id" type="keyword">cofix</span>; <span class="id" type="tactic">constructor</span>; [<span class="id" type="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Lists.List.html#nil_cons"><span class="id" type="lemma">nil_cons</span></a>|<span class="id" type="tactic">auto</span>]. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Example</span> <a name="CoList.test1_concat"><span class="id" type="definition">test1_concat</span></a> : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">(</span></a><a class="idref" href="CoList.html#CoList.take"><span class="id" type="definition">take</span></a> 4 (<a class="idref" href="CoList.html#CoList.concat"><span class="id" type="definition">concat</span></a> <a class="idref" href="CoList.html#CoList.test1"><span class="id" type="definition">test1</span></a> <a class="idref" href="CoList.html#CoList.AlwaysNonEmpty_test1"><span class="id" type="lemma">AlwaysNonEmpty_test1</span></a>)<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> 1 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> 1 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> 2 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:list_scope:x_'::'_x"><span class="id" type="notation">::</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#nil"><span class="id" type="constructor">nil</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">reflexivity</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <a class="idref" href="CoList.html#"><span class="id" type="module">CoList</span></a>.<br/>
+
+<br/>
+<span class="id" type="keyword">Notation</span> <a name="colist"><span class="id" type="abbreviation">colist</span></a> := <a class="idref" href="CoList.html#CoList.colist"><span class="id" type="abbreviation">CoList.colist</span></a>.<br/>
+<span class="id" type="keyword">Notation</span> <a name="cocons"><span class="id" type="abbreviation">cocons</span></a> := <a class="idref" href="CoList.html#CoList.cocons"><span class="id" type="abbreviation">CoList.cocons</span></a>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

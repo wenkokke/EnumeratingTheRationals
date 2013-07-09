@@ -1,0 +1,514 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1"/>
+<link href="coqdoc.css" rel="stylesheet" type="text/css"/>
+<title>SternBrocot</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab21"></a><h1 class="section">Enumerating The Rationals: The Stern-Brocot Tree</h1>
+
+<div class="paragraph"> </div>
+
+ <i>Current Status: while the implementation of the tree and the deforestation
+    algorithm function perfectly, it is quite hard to prove properties such as the
+    equivalence of our euclidian <span class="inlinecode"><span class="id" type="var">gcd</span></span> and the implementation of the binary <span class="inlinecode"><span class="id" type="var">gcd</span></span>
+    algorithm that Coq's standard library uses</i>.
+  
+<div class="paragraph"> </div>
+
+ The second approach of enumerating the rationals explored in the paper is the
+    construction and deforestation of the Stern-Brocot tree, explointing the relation
+    between <span class="inlinecode"><span class="id" type="var">igcd</span></span> and <span class="inlinecode"><span class="id" type="var">ungcd</span></span> and the usage of <span class="inlinecode"><span class="id" type="var">gcd</span></span> in the reduction algorithm for
+    rational numbers.
+
+<div class="paragraph"> </div>
+
+    The Stern-Brocot tree maps the execution traces of the Euclidian <span class="inlinecode"><span class="id" type="var">gcd</span></span> to reduced 
+    rational numbers. The first few levels of the tree can be seen below.
+
+<div class="paragraph"> </div>
+
+  
+    <img style="width:100%;" alt="The Stern-Brocot Tree" src="stern_brocot.png" />
+  
+
+<div class="paragraph"> </div>
+
+    Below we will construct the Stern-Brocot tree, but first we'll prove a few lemmas
+    on natural numbers.
+  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" type="keyword">Module</span> <a name="SternBrocot"><span class="id" type="module">SternBrocot</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab22"></a><h2 class="section">Additional Proofs on Natural Numbers</h2>
+ In order to construct the Stern-Brocot tree, we required
+      some simple lemmas on the natural numbers <span class="inlinecode"><span class="id" type="var">N</span></span>. We use these
+      lemmas to guarantee that <span class="inlinecode"><span class="id" type="var">next</span></span> never generates a rational
+      number with <span class="inlinecode">0</span> as a denumerator. See below.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <a name="SternBrocot.N_properties"><span class="id" type="section">N_properties</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">N_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Since we'll be working with natural numbers, we'll want
+        to be able to easily convert them to rational numbers.
+        The below definitions take care of that.
+
+<div class="paragraph"> </div>
+
+        Given a proof that <span class="inlinecode"><span class="id" type="var">n</span></span> is not zero, <span class="inlinecode"><span class="id" type="var">N_pos</span></span> will allow us to
+        safely convert it to a <span class="inlinecode"><span class="id" type="var">positive</span></span> number.
+       
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.N_pos"><span class="id" type="definition">N_pos</span></a> (<span class="id" type="var">n</span>:<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>) : <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">refine</span> (<span class="id" type="keyword">match</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> <span class="id" type="var">n'</span> <span class="id" type="keyword">return</span> <a class="idref" href="SternBrocot.html#n'"><span class="id" type="variable">n'</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 0      =&gt; <span class="id" type="keyword">fun</span> <span class="id" type="var">h</span> =&gt; <span class="id" type="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Npos"><span class="id" type="constructor">Npos</span></a> <span class="id" type="var">p</span> =&gt; <span class="id" type="keyword">fun</span> <span class="id" type="var">h</span> =&gt; <span class="id" type="var">p</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">exfalso</span>; <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Since any natural number is also an integer, we can always
+        convert members of <span class="inlinecode"><span class="id" type="var">N</span></span> to members of <span class="inlinecode"><span class="id" type="var">Z</span></span>.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.N_Z"><span class="id" type="definition">N_Z</span></a> (<span class="id" type="var">n</span>:<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Z"><span class="id" type="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| 0      =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Z0"><span class="id" type="constructor">Z0</span></a> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Npos"><span class="id" type="constructor">Npos</span></a> <span class="id" type="var">n</span> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#Zpos"><span class="id" type="constructor">Zpos</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Furthermore, for the propagation of the nonzero proofs over
+        the <span class="inlinecode"><span class="id" type="var">next</span></span> function below, it is important to know that given
+        a nonzero natural <span class="inlinecode"><span class="id" type="var">n</span></span>, we'll need the fact that the sum of <span class="inlinecode"><span class="id" type="var">n</span></span>
+        and some other natural number <span class="inlinecode"><span class="id" type="var">m</span></span> is also nonzero.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="SternBrocot.Npos_over_Nplus_l"><span class="id" type="lemma">Npos_over_Nplus_l</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0 -&gt; <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#:N_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="var">exfalso</span>; <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">destruct</span> <span class="id" type="var">m</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">m</span>]; <span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="SternBrocot.Npos_over_Nplus_r"><span class="id" type="lemma">Npos_over_Nplus_r</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0 -&gt; <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#:N_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span>; <span class="id" type="tactic">rewrite</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#Nplus_comm"><span class="id" type="abbreviation">Nplus_comm</span></a>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus_l"><span class="id" type="lemma">Npos_over_Nplus_l</span></a>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'\/'_x"><span class="id" type="notation">\/</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0 -&gt; <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#:N_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">n</span> <span class="id" type="var">m</span> <span class="id" type="var">H</span>; <span class="id" type="tactic">elim</span> <span class="id" type="var">H</span>; [<span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus_l"><span class="id" type="lemma">Npos_over_Nplus_l</span></a>|<span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus_r"><span class="id" type="lemma">Npos_over_Nplus_r</span></a>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <a class="idref" href="SternBrocot.html#SternBrocot.N_properties"><span class="id" type="section">N_properties</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab23"></a><h2 class="section">Construction of the Tree</h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <a name="SternBrocot.enum_def"><span class="id" type="section">enum_def</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">N_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The main issue with constructing the Stern-Brocot tree is that the <span class="inlinecode"><span class="id" type="var">next</span></span>
+        function passes along "pseudo"-rationals, such as 1/0 and
+        0/1. In order to safely be able to construct rationals using
+        these pseudo-rationals, we pass along proofs of the fact that the denumerator
+        can never be zero.
+
+<div class="paragraph"> </div>
+
+        We call these pairs of pseudo-rationals <span class="inlinecode"><span class="id" type="var">Qpair</span></span>s.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Inductive</span> <a name="SternBrocot.Qpair"><span class="id" type="inductive">Qpair</span></a> : <span class="id" type="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a name="SternBrocot.qpair"><span class="id" type="constructor">qpair</span></a> (<span class="id" type="var">a</span> <span class="id" type="var">b</span> <span class="id" type="var">c</span> <span class="id" type="var">d</span> : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#N"><span class="id" type="inductive">N</span></a>) (<span class="id" type="var">HL</span>: <a class="idref" href="SternBrocot.html#a"><span class="id" type="variable">a</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'\/'_x"><span class="id" type="notation">\/</span></a> <a class="idref" href="SternBrocot.html#c"><span class="id" type="variable">c</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0) (<span class="id" type="var">HR</span>: <a class="idref" href="SternBrocot.html#b"><span class="id" type="variable">b</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'\/'_x"><span class="id" type="notation">\/</span></a> <a class="idref" href="SternBrocot.html#d"><span class="id" type="variable">d</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0) : <a class="idref" href="SternBrocot.html#Qpair"><span class="id" type="inductive">Qpair</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">next</span></span> function that is used to unfold the tree can be seen 
+        as follows (adapted from the paper), where <span class="inlinecode"><span class="id" type="var">Qpair</span></span> is shorthand
+        for the type <span class="inlinecode">((<span class="id" type="var">Integer</span>,<span class="id" type="var">Integer</span>),(<span class="id" type="var">Integer</span>,<span class="id" type="var">Integer</span>))</span>.
+<pre>
+    next :: Qpair -&gt; (Qpair,Rational,Qpair)
+    next ((m, n), (m', n')) = ((mm', n), mm' / nn', (m, nn'))
+      where mm' = m + m'
+            nn' = n + n'
+</pre>
+        Our translation of this stepper function to Coq can be seen below.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.next"><span class="id" type="definition">next</span></a> (<span class="id" type="var">q</span>:<a class="idref" href="SternBrocot.html#SternBrocot.Qpair"><span class="id" type="inductive">Qpair</span></a>) : <a class="idref" href="SternBrocot.html#SternBrocot.Qpair"><span class="id" type="inductive">Qpair</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="SternBrocot.html#SternBrocot.Qpair"><span class="id" type="inductive">Qpair</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">refine</span> (<span class="id" type="keyword">match</span> <span class="id" type="var">q</span> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="SternBrocot.html#SternBrocot.qpair"><span class="id" type="constructor">qpair</span></a> <span class="id" type="var">a</span> <span class="id" type="var">b</span> <span class="id" type="var">c</span> <span class="id" type="var">d</span> <span class="id" type="var">HL</span> <span class="id" type="var">HR</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">ac</span> := <span class="id" type="var">a</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#:N_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <span class="id" type="var">c</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">bd</span> := <span class="id" type="var">b</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.NArith.BinNat.html#:N_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <span class="id" type="var">d</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">l</span>  := <a class="idref" href="SternBrocot.html#SternBrocot.qpair"><span class="id" type="constructor">qpair</span></a> <span class="id" type="var">a</span>  <span class="id" type="var">b</span>  <a class="idref" href="SternBrocot.html#ac"><span class="id" type="variable">ac</span></a> <a class="idref" href="SternBrocot.html#bd"><span class="id" type="variable">bd</span></a> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">r</span>  := <a class="idref" href="SternBrocot.html#SternBrocot.qpair"><span class="id" type="constructor">qpair</span></a> <a class="idref" href="SternBrocot.html#ac"><span class="id" type="variable">ac</span></a> <a class="idref" href="SternBrocot.html#bd"><span class="id" type="variable">bd</span></a>  <span class="id" type="var">c</span>  <span class="id" type="var">d</span> <span class="id" type="var">_</span> <span class="id" type="var">_</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">q</span>  := <a class="idref" href="SternBrocot.html#SternBrocot.N_Z"><span class="id" type="definition">N_Z</span></a> <a class="idref" href="SternBrocot.html#ac"><span class="id" type="variable">ac</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#:Q_scope:x_'#'_x"><span class="id" type="notation">#</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.N_pos"><span class="id" type="definition">N_pos</span></a> <a class="idref" href="SternBrocot.html#bd"><span class="id" type="variable">bd</span></a> <span class="id" type="var">_</span> <span class="id" type="keyword">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#l"><span class="id" type="variable">l</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#q"><span class="id" type="variable">q</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#r"><span class="id" type="variable">r</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">right</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">ac</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HL</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">right</span>; <span class="id" type="tactic">unfold</span> <span class="id" type="var">bd</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HR</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">left</span> ; <span class="id" type="tactic">unfold</span> <span class="id" type="var">ac</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HL</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">left</span> ; <span class="id" type="tactic">unfold</span> <span class="id" type="var">bd</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HR</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">unfold</span> <span class="id" type="var">bd</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.Npos_over_Nplus"><span class="id" type="lemma">Npos_over_Nplus</span></a> <span class="id" type="keyword">in</span> <span class="id" type="var">HR</span>; <span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Finally, we can construct the Stern-Brocot tree and enumeration,
+        using the algorithm referred to as <span class="inlinecode"><span class="id" type="var">rats4</span></span> in the original paper.
+<pre>
+    rats4 :: [Rational]
+    rats4 = bf (unfold next ((0, 1), (1, 0)))
+</pre>
+        Below we first construct the tree, and later in the definition of
+        <span class="inlinecode"><span class="id" type="var">enum</span></span> we deforest this tree to an enumeration using a breadth-first
+        traversal.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.tree"><span class="id" type="definition">tree</span></a> : <a class="idref" href="CoTree.html#cotree"><span class="id" type="abbreviation">cotree</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">refine</span> (<a class="idref" href="CoTree.html#CoTree.unfold"><span class="id" type="definition">CoTree.unfold</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.next"><span class="id" type="definition">next</span></a> (<a class="idref" href="SternBrocot.html#SternBrocot.qpair"><span class="id" type="constructor">qpair</span></a> 0 1 1 0 <span class="id" type="var">_</span> <span class="id" type="var">_</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">right</span> ; <span class="id" type="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">left</span>  ; <span class="id" type="tactic">discriminate</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.enum"><span class="id" type="definition">enum</span></a> : <a class="idref" href="CoList.html#colist"><span class="id" type="abbreviation">colist</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.QArith.QArith_base.html#Q"><span class="id" type="record">Q</span></a> := <a class="idref" href="CoTree.html#CoTree.bf"><span class="id" type="definition">CoTree.bf</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.tree"><span class="id" type="definition">tree</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <a class="idref" href="SternBrocot.html#SternBrocot.enum_def"><span class="id" type="section">enum_def</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a name="lab24"></a><h2 class="section">Relation with the Greatest Common Divisor</h2>
+
+<div class="paragraph"> </div>
+
+ The paper initially explores the relation between the paths in the
+      Stern-Brocot tree and the execution traces of the Euclidian algorithm
+      for calculating the greatest common divisor (or gcd).
+
+<div class="paragraph"> </div>
+
+      An 'instrumental' version of the <span class="inlinecode"><span class="id" type="var">gcd</span></span> algorithm is introduced.
+<pre>
+    igcd :: (Integer,Integer) -&gt; (Integer,[Bool])
+    igcd (m,n) =
+      if m&lt;n then step False (igcd (m,n−m)) else
+      if m&gt;n then step True  (igcd (m−n,n)) else (m,[ ])
+      where step b (d,bs) = (d,b:bs)
+</pre>
+      In our implementation we use the <span class="inlinecode"><span class="id" type="var">path</span></span> datatype for indexing <span class="inlinecode"><span class="id" type="var">cotree</span></span>s
+      instead of binary sequences, as the paper does. Our implementation of
+      the <span class="inlinecode"><span class="id" type="var">igcd</span></span> function and its derivatives <span class="inlinecode"><span class="id" type="var">gcd</span></span> and <span class="inlinecode"><span class="id" type="var">pgcd</span></span> can be found below.
+    
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <a name="SternBrocot.gcd_def"><span class="id" type="section">gcd_def</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">positive_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+First, however, we require a few lemmas to prove termination of the
+        <span class="inlinecode"><span class="id" type="var">igcd</span></span> algorithm. We prove its termination based on the decreasing of
+        the <i>sum</i> of its arguments, using <span class="inlinecode"><span class="id" type="var">pairsum</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Section</span> <a name="SternBrocot.gcd_def.igcd_lemma"><span class="id" type="section">igcd_lemma</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.pairsum"><span class="id" type="definition">pairsum</span></a> (<span class="id" type="var">p</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.to_nat"><span class="id" type="definition">Pos.to_nat</span></a> (<span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <span class="id" type="var">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Local</span>&nbsp;<span class="id" type="keyword">Open</span> <span class="id" type="keyword">Scope</span> <span class="id" type="var">nat_scope</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="SternBrocot.igcd_lemma1"><span class="id" type="lemma">igcd_lemma1</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span>, <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">&lt;</span></a><a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">)</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">&lt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">intros</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span> <span class="id" type="var">Om</span> <span class="id" type="keyword">On</span> <span class="id" type="var">Hlt</span>; <span class="id" type="tactic">omega</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="SternBrocot.igcd_lemma2"><span class="id" type="lemma">igcd_lemma2</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span>, <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a>0 -&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">)</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">&lt;</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Peano.html#:nat_scope:x_'<'_x"><span class="id" type="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>. <span class="id" type="tactic">intros</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span> <span class="id" type="var">Om</span> <span class="id" type="keyword">On</span>; <span class="id" type="tactic">omega</span>. <span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Lemma</span> <a name="SternBrocot.igcd_lemma3"><span class="id" type="lemma">igcd_lemma3</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">n</span>, <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.to_nat"><span class="id" type="definition">Pos.to_nat</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'<>'_x"><span class="id" type="notation">&lt;&gt;</span></a> 0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intro</span> <span class="id" type="var">n</span>; <span class="id" type="tactic">pose</span> <span class="id" type="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.is_pos"><span class="id" type="lemma">Pos2Nat.is_pos</span></a> <span class="id" type="var">n</span>) <span class="id" type="keyword">as</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#not_eq_sym"><span class="id" type="lemma">not_eq_sym</span></a>,<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Arith.Lt.html#lt_O_neq"><span class="id" type="abbreviation">lt_O_neq</span></a>,<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.is_pos"><span class="id" type="lemma">Pos2Nat.is_pos</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">End</span> <a class="idref" href="SternBrocot.html#SternBrocot.gcd_def.igcd_lemma"><span class="id" type="section">igcd_lemma</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.step"><span class="id" type="definition">step</span></a> (<span class="id" type="var">ps</span>: <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a> -&gt; <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>) (<span class="id" type="var">acc</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="SternBrocot.html#acc"><span class="id" type="variable">acc</span></a> <span class="id" type="keyword">with</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">p0</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">d</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#ps"><span class="id" type="variable">ps</span></a> <span class="id" type="var">p0</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> <span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Function</span> <span class="id" type="var">igcd</span> (<span class="id" type="var">p</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) {<span class="id" type="keyword">measure</span> <a class="idref" href="SternBrocot.html#SternBrocot.pairsum"><span class="id" type="definition">pairsum</span></a> <span class="id" type="var">p</span>} :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <span class="id" type="keyword">with</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a> =&gt; <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">if</span> (<span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'<?'_x"><span class="id" type="notation">&lt;?</span></a> <span class="id" type="var">n</span>) <span class="id" type="keyword">then</span> <a class="idref" href="SternBrocot.html#SternBrocot.step"><span class="id" type="definition">step</span></a> <a class="idref" href="CoTree.html#CoTree.Left"><span class="id" type="constructor">CoTree.Left</span></a>  (<a class="idref" href="SternBrocot.html#igcd"><span class="id" type="definition">igcd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,(</span></a><span class="id" type="var">n</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">))</span></a>) <span class="id" type="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">if</span> (<span class="id" type="var">n</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'<?'_x"><span class="id" type="notation">&lt;?</span></a> <span class="id" type="var">m</span>) <span class="id" type="keyword">then</span> <a class="idref" href="SternBrocot.html#SternBrocot.step"><span class="id" type="definition">step</span></a> <a class="idref" href="CoTree.html#CoTree.Right"><span class="id" type="constructor">CoTree.Right</span></a> (<a class="idref" href="SternBrocot.html#igcd"><span class="id" type="definition">igcd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">((</span></a><span class="id" type="var">m</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'-'_x"><span class="id" type="notation">-</span></a> <span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">),</span></a><span class="id" type="var">n</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>) <span class="id" type="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><span class="id" type="var">m</span><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a> <a class="idref" href="CoTree.html#CoTree.Here"><span class="id" type="constructor">CoTree.Here</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">p</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span> <span class="id" type="var">Hp</span> <span class="id" type="var">Hltb</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">pose</span> <span class="id" type="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.ltb_spec"><span class="id" type="lemma">Pos.ltb_spec</span></a> <span class="id" type="var">m</span> <span class="id" type="var">n</span>) <span class="id" type="keyword">as</span> <span class="id" type="var">Hlt</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">Hlt</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">Hlt</span>|<span class="id" type="var">Hlt</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">pose</span> <span class="id" type="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.is_pos"><span class="id" type="lemma">Pos2Nat.is_pos</span></a> <span class="id" type="var">m</span>) <span class="id" type="keyword">as</span> <span class="id" type="var">Om</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">pose</span> <span class="id" type="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.is_pos"><span class="id" type="lemma">Pos2Nat.is_pos</span></a> <span class="id" type="var">n</span>) <span class="id" type="keyword">as</span> <span class="id" type="keyword">On</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">rewrite</span> 2!<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.inj_add"><span class="id" type="lemma">Pos2Nat.inj_add</span></a>, 1!<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.inj_sub"><span class="id" type="lemma">Pos2Nat.inj_sub</span></a>. <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma1"><span class="id" type="lemma">igcd_lemma1</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma3"><span class="id" type="lemma">igcd_lemma3</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma3"><span class="id" type="lemma">igcd_lemma3</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">apply</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.inj_lt"><span class="id" type="lemma">Pos2Nat.inj_lt</span></a>; <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">inversion</span> <span class="id" type="var">Hltb</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">intros</span> <span class="id" type="var">p</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span> <span class="id" type="var">Hp</span> <span class="id" type="var">_</span> <span class="id" type="var">Hltb</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">pose</span> <span class="id" type="var">proof</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.ltb_spec"><span class="id" type="lemma">Pos.ltb_spec</span></a> <span class="id" type="var">n</span> <span class="id" type="var">m</span>) <span class="id" type="keyword">as</span> <span class="id" type="var">Hlt</span>; <span class="id" type="tactic">destruct</span> <span class="id" type="var">Hlt</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">Hlt</span>|<span class="id" type="var">Hlt</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">simpl</span>; <span class="id" type="tactic">rewrite</span> 2!<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.inj_add"><span class="id" type="lemma">Pos2Nat.inj_add</span></a>; <span class="id" type="tactic">rewrite</span> 1!<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.Pnat.html#Pos2Nat.inj_sub"><span class="id" type="lemma">Pos2Nat.inj_sub</span></a>. <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma2"><span class="id" type="lemma">igcd_lemma2</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma3"><span class="id" type="lemma">igcd_lemma3</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">apply</span> <a class="idref" href="SternBrocot.html#SternBrocot.igcd_lemma3"><span class="id" type="lemma">igcd_lemma3</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">auto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">inversion</span> <span class="id" type="var">Hltb</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">gcd</span></span> function returns the first result of <span class="inlinecode"><span class="id" type="var">igcd</span></span>, i.e. the gcd. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.gcd"><span class="id" type="definition">gcd</span></a> (<span class="id" type="var">x</span> <span class="id" type="var">y</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#fst"><span class="id" type="definition">fst</span></a> (<a class="idref" href="SternBrocot.html#SternBrocot.igcd"><span class="id" type="lemma">igcd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#x"><span class="id" type="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#y"><span class="id" type="variable">y</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">pgcd</span></span> function returns the second result of <span class="inlinecode"><span class="id" type="var">igcd</span></span>, i.e. the execution trace. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.pgcd"><span class="id" type="definition">pgcd</span></a> (<span class="id" type="var">x</span> <span class="id" type="var">y</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#snd"><span class="id" type="definition">snd</span></a> (<a class="idref" href="SternBrocot.html#SternBrocot.igcd"><span class="id" type="lemma">igcd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#x"><span class="id" type="variable">x</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#y"><span class="id" type="variable">y</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We would like to be able to prove equivalence between our Euclidian <span class="inlinecode"><span class="id" type="var">gcd</span></span>
+        algorithm, and the binary <span class="inlinecode"><span class="id" type="var">gcd</span></span> in the Coq standard libraries, as this would
+        allow us to use useful theorems such as <span class="inlinecode"><span class="id" type="var">gcd_divide_l</span></span> and <span class="inlinecode"><span class="id" type="var">gcd_divide_r</span></span>.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="SternBrocot.gcd_equiv"><span class="id" type="lemma">gcd_equiv</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">x</span> <span class="id" type="var">y</span>, <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.gcd"><span class="id" type="definition">Pos.gcd</span></a> <a class="idref" href="SternBrocot.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="SternBrocot.html#y"><span class="id" type="variable">y</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.gcd"><span class="id" type="definition">gcd</span></a> <a class="idref" href="SternBrocot.html#x"><span class="id" type="variable">x</span></a> <a class="idref" href="SternBrocot.html#y"><span class="id" type="variable">y</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><span class="id" type="var">ungcd</span></span> algorithm presented in the paper translates effortlessly to Coq.
+<pre>
+    ungcd::(Integer,[Bool]) -&gt; (Integer,Integer)
+    ungcd (d,bs) = foldr undo (d,d) bs
+      where
+      undo False (m,n) = (m,n+m)
+      undo True  (m,n) = (m+n,n)
+</pre>
+        Our translation of the algorithm can be seen below. We have inlined the <span class="inlinecode"><span class="id" type="var">undo</span></span>
+        function, and are using the recursion in our <span class="inlinecode"><span class="id" type="var">path</span></span> structure instead of the
+        <span class="inlinecode"><span class="id" type="tactic">fold</span></span> function on binary sequences.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Fixpoint</span> <a name="SternBrocot.ungcd_acc"><span class="id" type="definition">ungcd_acc</span></a> (<span class="id" type="var">p</span>: <a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>) (<span class="id" type="var">m</span> <span class="id" type="var">n</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">match</span> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <span class="id" type="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoTree.html#CoTree.Here"><span class="id" type="constructor">CoTree.Here</span></a>    =&gt; <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoTree.html#CoTree.Left"><span class="id" type="constructor">CoTree.Left</span></a>  <span class="id" type="var">p</span> =&gt; <a class="idref" href="SternBrocot.html#ungcd_acc"><span class="id" type="definition">ungcd_acc</span></a> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> (<a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="CoTree.html#CoTree.Right"><span class="id" type="constructor">CoTree.Right</span></a> <span class="id" type="var">p</span> =&gt; <a class="idref" href="SternBrocot.html#ungcd_acc"><span class="id" type="definition">ungcd_acc</span></a> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> (<a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#:positive_scope:x_'+'_x"><span class="id" type="notation">+</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a>) <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.ungcd"><span class="id" type="definition">ungcd</span></a> (<span class="id" type="var">p</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="CoTree.html#path"><span class="id" type="abbreviation">path</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">let</span> <span class="id" type="var">g</span> := <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#fst"><span class="id" type="definition">fst</span></a> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <span class="id" type="keyword">in</span> <a class="idref" href="SternBrocot.html#SternBrocot.ungcd_acc"><span class="id" type="definition">ungcd_acc</span></a> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#snd"><span class="id" type="definition">snd</span></a> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a>) <a class="idref" href="SternBrocot.html#g"><span class="id" type="variable">g</span></a> <a class="idref" href="SternBrocot.html#g"><span class="id" type="variable">g</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Lastly, we have explored a few claims stated in the paper,
+        such as the relation between <span class="inlinecode"><span class="id" type="var">igcd</span></span> and <span class="inlinecode"><span class="id" type="var">ungcd</span></span>.
+      
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="SternBrocot.igcd_ungcd"><span class="id" type="lemma">igcd_ungcd</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span>, <a class="idref" href="SternBrocot.html#SternBrocot.ungcd"><span class="id" type="definition">ungcd</span></a> (<a class="idref" href="SternBrocot.html#SternBrocot.igcd"><span class="id" type="lemma">igcd</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>) <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">(</span></a><a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">,</span></a><a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:core_scope:'('_x_','_x_','_'..'_','_x_')'"><span class="id" type="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">m</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">m</span>] <span class="id" type="keyword">using</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_ind"><span class="id" type="definition">Pos.peano_ind</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">induction</span> <span class="id" type="var">n</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">n</span>] <span class="id" type="keyword">using</span> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.PArith.BinPos.html#Pos.peano_ind"><span class="id" type="definition">Pos.peano_ind</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+And the claim that all <span class="inlinecode"><span class="id" type="var">path</span></span>s map to a unqiue rational number. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="SternBrocot.ungcd_unique"><span class="id" type="lemma">ungcd_unique</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">p</span> <span class="id" type="var">q</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="SternBrocot.html#SternBrocot.ungcd"><span class="id" type="definition">ungcd</span></a> <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.ungcd"><span class="id" type="definition">ungcd</span></a> <a class="idref" href="SternBrocot.html#q"><span class="id" type="variable">q</span></a> -&gt; <a class="idref" href="SternBrocot.html#p"><span class="id" type="variable">p</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="SternBrocot.html#q"><span class="id" type="variable">q</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">intros</span> <span class="id" type="var">p</span> <span class="id" type="var">q</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">p</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">x</span> <span class="id" type="var">p</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">case</span> <span class="id" type="var">q</span> <span class="id" type="keyword">as</span> [<span class="id" type="var">y</span> <span class="id" type="var">q</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">induction</span> <span class="id" type="var">p</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">p</span>|<span class="id" type="var">p</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" type="tactic">induction</span> <span class="id" type="var">q</span> <span class="id" type="keyword">as</span> [|<span class="id" type="var">q</span>|<span class="id" type="var">q</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">replace</span> <span class="id" type="var">x</span> <span class="id" type="keyword">with</span> <span class="id" type="var">y</span>. <span class="id" type="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">apply</span> (<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#f_equal"><span class="id" type="lemma">f_equal</span></a> (@<a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#fst"><span class="id" type="definition">fst</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>)) <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">compute</span> <span class="id" type="keyword">in</span> <span class="id" type="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">symmetry</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="tactic">assumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" type="tactic">clear</span> <span class="id" type="var">IHq</span>; <span class="id" type="var">exfalso</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+And the claim that if two rationals map to the same path, their
+        reductions are also equal. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Definition</span> <a name="SternBrocot.qred"><span class="id" type="definition">qred</span></a> (<span class="id" type="var">m</span> <span class="id" type="var">n</span>: <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>) : <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Datatypes.html#:type_scope:x_'*'_x"><span class="id" type="notation">*</span></a><a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Numbers.BinNums.html#positive"><span class="id" type="inductive">positive</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="keyword">Theorem</span> <a name="SternBrocot.pgcd_unique"><span class="id" type="lemma">pgcd_unique</span></a> : <span class="id" type="keyword">forall</span> <span class="id" type="var">m</span> <span class="id" type="var">n</span> <span class="id" type="var">m'</span> <span class="id" type="var">n'</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="SternBrocot.html#SternBrocot.pgcd"><span class="id" type="definition">pgcd</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.pgcd"><span class="id" type="definition">pgcd</span></a> <a class="idref" href="SternBrocot.html#m'"><span class="id" type="variable">m'</span></a> <a class="idref" href="SternBrocot.html#n'"><span class="id" type="variable">n'</span></a> -&gt; <a class="idref" href="SternBrocot.html#SternBrocot.qred"><span class="id" type="axiom">qred</span></a> <a class="idref" href="SternBrocot.html#m"><span class="id" type="variable">m</span></a> <a class="idref" href="SternBrocot.html#n"><span class="id" type="variable">n</span></a> <a class="idref" href="http://coq.inria.fr/distrib/8.4pl2/stdlib/Coq.Init.Logic.html#:type_scope:x_'='_x"><span class="id" type="notation">=</span></a> <a class="idref" href="SternBrocot.html#SternBrocot.qred"><span class="id" type="axiom">qred</span></a> <a class="idref" href="SternBrocot.html#m'"><span class="id" type="variable">m'</span></a> <a class="idref" href="SternBrocot.html#n'"><span class="id" type="variable">n'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" type="var">Admitted</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" type="keyword">End</span> <a class="idref" href="SternBrocot.html#SternBrocot.gcd_def"><span class="id" type="section">gcd_def</span></a>.<br/>
+
+<br/>
+<span class="id" type="keyword">End</span> <a class="idref" href="SternBrocot.html#"><span class="id" type="module">SternBrocot</span></a>.<br/>
+</div>
+<hr/>This page has been generated by <a href="http://coq.inria.fr/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
