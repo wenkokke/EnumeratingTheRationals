@@ -1,4 +1,4 @@
-Enumerating The Rationals
+[Enumerating The Rationals](http://pepijnkokke.github.io/EnumeratingTheRationals/)
 =========================
 
 In this repository I present a formalization of the functional pearl ["Enumerating the Rationals"][paper-url] by Gibbons, Lester and Bird in Coq.
