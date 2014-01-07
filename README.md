@@ -1,4 +1,4 @@
-[Enumerating The Rationals](http://pepijnkokke.github.io/EnumeratingTheRationals/)
+Enumerating The Rationals
 =========================
 
 In this repository I present a formalization of the functional pearl ["Enumerating the Rationals"][paper-url] by Gibbons, Lester and Bird in Coq.
@@ -8,7 +8,9 @@ My approach is divided into two parts:
   1. implement the primitives for reasoning about codata;
   2. implement the enumerations discussed in the paper.
   
-Each module is implemented in literal Coq, and contains further documentation.
+Each module is implemented in literal Coq, and contains further documentation. If
+you are reading this in the GitHub repository, a version as a GitHub page can be found
+[here](http://pepijnkokke.github.io/EnumeratingTheRationals/).
   
 Data and CoData
 -------------------------
